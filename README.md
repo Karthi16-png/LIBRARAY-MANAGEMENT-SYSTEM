@@ -77,6 +77,49 @@ The **VITCC Enterprise Library Management System** is a full-featured, secure, a
 
 ---
 
+## 📋 Prerequisites & System Requirements
+
+Before running the application, ensure the following components are available on your system:
+
+### 1. Software & Runtimes
+- **Python**: `3.10` or higher (`3.12` recommended). Verify with `python --version`.
+- **Git**: Installed for repository cloning and version control.
+- **pip** & **venv**: Standard Python package manager and virtual environment tools.
+
+### 2. Neo4j Graph Database
+This application is powered by **Neo4j 5+**. You can connect via either:
+- **Option A (Cloud Neo4j AuraDB - Recommended)**:
+  - Create a free instance at [console.neo4j.io](https://console.neo4j.io).
+  - Note your connection URI (`neo4j+s://<instance-id>.databases.neo4j.io`), username, and generated password.
+  - *Note*: AuraDB Free Tier databases automatically pause after 3 days of inactivity. If connection fails, log into [console.neo4j.io](https://console.neo4j.io) and click **"Resume"**.
+- **Option B (Local Neo4j via Docker or Desktop)**:
+  - Run a local Neo4j 5 container:
+    ```bash
+    docker run -d --name neo4j-vitcc -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password123 neo4j:5-community
+    ```
+  - Connection URI: `bolt://localhost:7687`
+
+### 3. Institutional Policies & Credentials
+- **Email Validation**: Account registration (`/register`) and user provisioning (`/manage_users`) strictly require valid institutional domains: `@vit.edu` or `@vit.ac.in`.
+- **Password Complexity**: 8 to 64 characters, with at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special symbol.
+
+---
+
+## 🔑 Default Test Accounts (RBAC)
+
+When the database is seeded using `python seed_all_data.py`, 11 pre-configured users are initialized across all four roles:
+
+| Role | Username | Password | Institutional Email | Access Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `Admin@123` | `admin@vit.edu` | Full system control, user provisioning/suspension, book deletion |
+| **Librarian** | `librarian` | `Lib@12345` | `librarian@vit.edu` | Circulation desk, book loans, request approvals, returns, fine payments |
+| **Staff** | `staff` | `Staff@123` | `staff@vit.edu` | Faculty catalog search, 3-book quota, learning paths, centrality stats |
+| **Staff** | `prof_turing` | `Staff@123` | `turing@vit.edu` | Faculty catalog search, borrowing, academic roadmaps |
+| **Student** | `student` | `Student@1` | `student@vit.edu` | Patron book search, loan requests, learning roadmaps, fine statements |
+| **Student** | `alex_stu` | `Student@1` | `alex@vit.edu` | Academic student patron account |
+
+---
+
 ## 📦 Installation & Local Setup
 
 ### 1. Clone the Repository
@@ -87,7 +130,7 @@ cd "DBS DA"
 
 ### 2. Set Up Virtual Environment
 ```bash
-# Windows
+# Windows (PowerShell / Command Prompt)
 python -m venv .venv
 .venv\Scripts\activate
 
@@ -101,16 +144,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure Neo4j AuraDB Credentials
-Ensure your environment or `app.py` has valid Neo4j connection parameters:
-```python
-NEO4J_URI      = "neo4j+s://<your-auradb-instance>.databases.neo4j.io"
-NEO4J_USERNAME = "neo4j"
-NEO4J_PASSWORD = "<your-password>"
-NEO4J_DATABASE = "neo4j"
-```
+### 4. Configure Environment Variables
+Copy `.env.example` to `.env` or set environment variables:
+```bash
+# Windows PowerShell
+$env:NEO4J_URI="neo4j+s://<your-instance-id>.databases.neo4j.io"
+$env:NEO4J_USERNAME="neo4j"
+$env:NEO4J_PASSWORD="<your-password>"
+$env:NEO4J_DATABASE="neo4j"
 
-### 5. (Optional) Seed Sample Academic Catalog & Relationships
+# Linux / macOS
+export NEO4J_URI="neo4j+s://<your-instance-id>.databases.neo4j.io"
+export NEO4J_USERNAME="neo4j"
+export NEO4J_PASSWORD="<your-password>"
+export NEO4J_DATABASE="neo4j"
+```
+*(If no environment variables are set, `app.py` falls back to the default team cloud instance configuration).*
+
+### 5. Seed Database (Required on Fresh Databases)
+> ⚠️ **Notice**: `seed_all_data.py` executes `MATCH (n) DETACH DELETE n` to reset schema constraints and populate standard categories, books, copies, prerequisite edges, and users.
 ```bash
 python seed_all_data.py
 ```

@@ -4,14 +4,15 @@ Migrated from Oracle 21c to Neo4j Graph Database.
 Seeds all 9 entity types with 10+ records each using explicit graph relationships.
 """
 
+import os
 from neo4j import GraphDatabase
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
-NEO4J_URI      = "neo4j+s://e7f1b8d0.databases.neo4j.io"
-NEO4J_USERNAME = "e7f1b8d0"
-NEO4J_PASSWORD = "ROzf6G2s6B2tP6C61ODmEGMbmG-pzeCq5KZgI6CmxHI"
-NEO4J_DATABASE = "e7f1b8d0"
+NEO4J_URI      = os.getenv("NEO4J_URI", "neo4j+s://e7f1b8d0.databases.neo4j.io")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "e7f1b8d0")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "ROzf6G2s6B2tP6C61ODmEGMbmG-pzeCq5KZgI6CmxHI")
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "e7f1b8d0")
 
 
 def run_seed():

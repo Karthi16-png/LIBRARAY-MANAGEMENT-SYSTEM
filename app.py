@@ -34,7 +34,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # ============================================================================
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = "enterprise-library-secret-key-change-in-production"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "enterprise-library-secret-key-change-in-production")
 app.config["WTF_CSRF_ENABLED"] = not app.config.get("TESTING", False)
 csrf = CSRFProtect(app)
 
@@ -48,10 +48,10 @@ Session(app)
 # ============================================================================
 # Neo4j AuraDB Connection
 # ============================================================================
-NEO4J_URI      = "neo4j+s://e7f1b8d0.databases.neo4j.io"
-NEO4J_USERNAME = "e7f1b8d0"
-NEO4J_PASSWORD = "ROzf6G2s6B2tP6C61ODmEGMbmG-pzeCq5KZgI6CmxHI"
-NEO4J_DATABASE = "e7f1b8d0"
+NEO4J_URI      = os.getenv("NEO4J_URI", "neo4j+s://e7f1b8d0.databases.neo4j.io")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "e7f1b8d0")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "ROzf6G2s6B2tP6C61ODmEGMbmG-pzeCq5KZgI6CmxHI")
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "e7f1b8d0")
 
 _driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 

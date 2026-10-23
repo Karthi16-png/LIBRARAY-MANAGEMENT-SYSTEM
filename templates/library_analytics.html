@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Library Centrality & Influencer Analytics | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Library Centrality Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-container {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding-bottom: 30px;
+    }
+
+    /* Top Executive Header */
+    .analytics-header {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .analytics-header-info h1 {
+        font-size: 1.45rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .analytics-header-info p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+        max-width: 680px;
+        line-height: 1.5;
+    }
+
+    /* Metric Grid */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .metric-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .metric-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .metric-label {
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+
+    .metric-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .metric-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        font-family: var(--font-sans);
+    }
+
+    .metric-sub {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+    }
+
+    /* Section Cards */
+    .analytics-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 12px;
+    }
+
+    .section-header h2 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-header p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    /* Custom Table Styling */
+    .analytics-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+    }
+
+    .analytics-table th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-subtle);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .analytics-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        color: var(--text-secondary);
+        vertical-align: middle;
+    }
+
+    .analytics-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-primary);
+    }
+
+    .rank-badge {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+    }
+
+    .rank-1 { background: rgba(245, 158, 11, 0.2); color: #F59E0B; border: 1px solid #F59E0B; }
+    .rank-2 { background: rgba(156, 163, 175, 0.2); color: #9CA3AF; border: 1px solid #9CA3AF; }
+    .rank-3 { background: rgba(180, 83, 9, 0.2); color: #B45309; border: 1px solid #B45309; }
+    .rank-other { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+
+    /* Density Bar */
+    .density-bar-wrap {
+        width: 100%;
+        max-width: 180px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: var(--radius-full);
+        height: 8px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .density-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: var(--radius-full);
+        background: linear-gradient(90deg, #3B82F6, #10B981);
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Grid of Two Columns */
+    .analytics-grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 960px) {
+        .analytics-grid-two {
+            grid-template-columns: 1fr;
+        }
+    }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <!-- Header Card -->
+    <div class="analytics-header">
+        <div class="analytics-header-info">
+            <h1>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FBBF24" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Author Centrality & Graph Influencer Analytics
+            </h1>
+            <p>
+                Real-time topological link density, degree centrality, and multi-hop circulation statistics computed directly over the Neo4j Knowledge Graph.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('book_bridge') }}" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                Book Bridge
+            </a>
+            <a href="{{ url_for('graph_visualizer') }}" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Live Graph
+            </a>
+        </div>
+    </div>
+
+    <!-- Top Metric Grid -->
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Knowledge Nodes</span>
+                <div class="metric-icon" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.nodes_count }}</div>
+            <div class="metric-sub">Entities in AuraDB catalog</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Relationships</span>
+                <div class="metric-icon" style="background: rgba(16, 185, 129, 0.15); color: #34D399;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.rels_count }}</div>
+            <div class="metric-sub">Edges across 10 relationship types</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Average Degree</span>
+                <div class="metric-icon" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 9.4 7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6a1.78 1.78 0 0 0 0-3.2z"></path></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.avg_degree }}</div>
+            <div class="metric-sub">Connections per entity node</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-top">
+                <span class="metric-label">Active Borrowers</span>
+                <div class="metric-icon" style="background: rgba(168, 85, 247, 0.15); color: #C084FC;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.active_borrowers }}</div>
+            <div class="metric-sub">Across {{ metrics.active_loans }} active circulation loans</div>
+        </div>
+    </div>
+
+    <!-- Section 1: Author Borrowing Centrality (Primary Task Query) -->
+    <div class="analytics-section">
+        <div class="section-header">
+            <div>
+                <h2>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#F59E0B" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    Top Authors by Graph Degree Centrality & Borrowing Density
+                </h2>
+                <p>Computed via <code>(:Author)-[:WROTE]-&gt;(:Book)-[:HAS_COPY]-&gt;(:Copy)&lt;-[:FOR_COPY]-(:Loan)</code></p>
+            </div>
+            <span class="badge badge-info">Top 5 Influencers</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="analytics-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Author Name</th>
+                        <th>Total Borrowings</th>
+                        <th>Authored Titles</th>
+                        <th>Active Copies</th>
+                        <th>Borrowing Density Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for auth in top_authors %}
+                    <tr>
+                        <td>
+                            <span class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">
+                                {{ loop.index }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong style="color: var(--text-primary); font-size: 0.9rem;">{{ auth.author_name }}</strong>
+                        </td>
+                        <td>
+                            <span style="font-family: var(--font-mono); font-weight: 700; color: #60A5FA; font-size: 0.95rem;">
+                                {{ auth.total_borrowings }} {{ 'Loan' if auth.total_borrowings == 1 else 'Loans' }}
+                            </span>
+                        </td>
+                        <td>{{ auth.authored_books }} {{ 'Book' if auth.authored_books == 1 else 'Books' }}</td>
+                        <td>{{ auth.active_copies }} {{ 'Copy' if auth.active_copies == 1 else 'Copies' }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="density-bar-wrap">
+                                    <div class="density-bar-fill" data-pct="{{ auth.bar_width }}"></div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+                                    {{ auth.share_pct }}%
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 2: Two Column Grid (Top Books Centrality & Category Density) -->
+    <div class="analytics-grid-two">
+        <!-- Top Influential Books -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <div>
+                    <h2>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38BDF8" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                        Most Connected Books (Degree Centrality)
+                    </h2>
+                    <p>Composite score: Copies &times; 2 + Loans &times; 3 + Requests</p>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Category</th>
+                            <th>Degree Score</th>
+                            <th>Loans</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bk in top_books %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--text-primary);">{{ bk.title }}</strong>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">{{ bk.author_name or 'Author' }}</div>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #FBBF24; font-size: 0.7rem;">
+                                    {{ bk.category_name }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family: var(--font-mono); font-weight: 800; color: #34D399;">
+                                    {{ bk.degree_score }}
+                                </span>
+                            </td>
+                            <td style="font-family: var(--font-mono);">{{ bk.loans_count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Category Circulation Distribution -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <div>
+                    <h2>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A78BFA" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        Topic Circulation & Category Density
+                    </h2>
+                    <p>Cluster closeness by borrowing volume</p>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Category Domain</th>
+                            <th>Code</th>
+                            <th>Catalog Titles</th>
+                            <th>Total Loans</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--text-primary);">{{ cat.category_name }}</strong>
+                            </td>
+                            <td><span style="font-family: var(--font-mono); color: var(--accent-primary);">{{ cat.section_code }}</span></td>
+                            <td>{{ cat.books_count }} {{ 'Title' if cat.books_count == 1 else 'Titles' }}</td>
+                            <td>
+                                <span style="font-family: var(--font-mono); font-weight: 700; color: #F59E0B;">
+                                    {{ cat.total_loans }} {{ 'Loan' if cat.total_loans == 1 else 'Loans' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".density-bar-fill[data-pct]").forEach(function(bar) {
+            const pct = bar.getAttribute("data-pct") || "0";
+            bar.style.width = pct + "%";
+        });
+    });
+</script>
+{% endblock %}

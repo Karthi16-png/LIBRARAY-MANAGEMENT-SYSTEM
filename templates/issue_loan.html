@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Book Loan | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Issue Loan{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-input,
+    select.form-input,
+    input[type="text"].form-input,
+    input[type="number"].form-input {
+        background: #0f172a !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 0.5rem !important;
+        padding: 0.65rem 0.85rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .form-input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+    select.form-input option,
+    select.form-input optgroup {
+        background: #0f172a;
+        color: #f8fafc;
+    }
+    .filter-wrapper {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .filter-wrapper input.form-input {
+        padding-left: 38px !important;
+        width: 100% !important;
+    }
+    .filter-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        width: 16px;
+        height: 16px;
+        z-index: 2;
+    }
+    .autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 0.5rem;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    }
+    .autocomplete-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+    .autocomplete-dropdown::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+    }
+    .autocomplete-item {
+        padding: 0.65rem 0.85rem;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        transition: background 0.15s ease;
+    }
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background: #1e293b;
+    }
+    .autocomplete-highlight {
+        color: #60a5fa;
+        font-weight: 700;
+        text-decoration: underline;
+        text-decoration-color: rgba(96, 165, 250, 0.6);
+    }
+    .autocomplete-empty {
+        padding: 0.85rem 1rem;
+        color: #94a3b8;
+        font-size: 0.82rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 0 auto;">
+    <div style="margin-bottom: 28px;">
+        <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;">Issue Book Loan</h1>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Assign an available physical copy to a registered patron</p>
+    </div>
+
+    <div class="login-card" style="max-width: 100%; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
+        <form method="POST" action="{{ url_for('issue_loan') }}" id="issueLoanForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <!-- 1. BOOK SELECTION DROPDOWN MENU -->
+            <div class="form-group" style="margin-bottom: 22px;">
+                <label class="form-label" for="book_id" style="display: block; margin-bottom: 8px; font-weight: 600;">Select Book from Catalog *</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <!-- Quick Book Filter Search Input (100% width, no duplicate emoji) -->
+                    <div class="filter-wrapper" id="book_filter_wrapper">
+                        <input 
+                            type="text" 
+                            id="book_quick_search" 
+                            class="form-input" 
+                            placeholder="Type to search books by title, author, or ISBN..." 
+                            autocomplete="off"
+                        >
+                        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <div id="book_dropdown_list" class="autocomplete-dropdown" style="display: none;"></div>
+                    </div>
+
+                    <!-- Books Dropdown Menu -->
+                    <select id="book_id" name="book_id" class="form-input" style="cursor: pointer;">
+                        <option value="">-- Choose Book from Dropdown Menu --</option>
+                        {% if all_books %}
+                            <optgroup label="Available in Inventory" id="availBooksGroup">
+                                {% for b in all_books if (b.available_copies_count or 0) > 0 %}
+                                    <option 
+                                        value="{{ b.book_id }}" 
+                                        data-avail="{{ b.available_copies_count }}"
+                                        data-search="{{ b.title|lower }} {{ (b.authors or '')|lower }} {{ b.category_name|lower }} {{ b.isbn|lower }}"
+                                    >
+                                        {{ b.title }} &mdash; [{{ b.category_name }}] ({{ b.available_copies_count }} avail / {{ b.total_copies_count }} total)
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Currently Out of Stock" id="outOfStockGroup">
+                                {% for b in all_books if (b.available_copies_count or 0) == 0 %}
+                                    <option 
+                                        value="{{ b.book_id }}" 
+                                        data-avail="0"
+                                        data-search="{{ b.title|lower }} {{ (b.authors or '')|lower }} {{ b.category_name|lower }} {{ b.isbn|lower }}"
+                                        style="opacity: 0.6;"
+                                    >
+                                        {{ b.title }} &mdash; [{{ b.category_name }}] (0 Available - Out of Stock)
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endif %}
+                    </select>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Select the book you wish to issue to automatically populate available physical copies.</small>
+            </div>
+
+            <!-- 2. PHYSICAL COPY ID / BARCODE SELECTION -->
+            <div class="form-group" style="margin-bottom: 22px;">
+                <label class="form-label" for="copy_select" style="display: block; margin-bottom: 8px; font-weight: 600;">Physical Copy ID / Barcode *</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <!-- Dropdown for specific physical copy of the chosen book -->
+                    <select id="copy_select" name="copy_id" class="form-input" style="cursor: pointer;" required>
+                        <option value="">-- Choose Specific Copy --</option>
+                        {% if available_copies %}
+                            {% for c in available_copies %}
+                                <option 
+                                    value="{{ c.copy_id }}" 
+                                    data-book-id="{{ c.book_id }}"
+                                    data-title="{{ c.book_title }}"
+                                >
+                                    Copy #{{ c.copy_id }} &mdash; {{ c.book_title }} [Condition: {{ c.condition }} | Status: {{ c.status }}]
+                                </option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+
+                    <!-- Hidden raw Copy ID input kept synchronized for script compatibility without raw white input box -->
+                    <input type="hidden" id="copy_id" value="">
+
+                    <div>
+                        <span id="copy_status_badge" style="font-size: 0.78rem; font-weight: 700; padding: 6px 12px; border-radius: var(--radius-sm); display: none; white-space: nowrap;"></span>
+                    </div>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Selecting a book above automatically picks the first available physical copy from inventory.</small>
+            </div>
+
+            <!-- 3. PATRON USERNAME DROPDOWN MENU WITH ROLES -->
+            <div class="form-group" style="margin-bottom: 22px;">
+                <label class="form-label" for="borrower_username" style="display: block; margin-bottom: 8px; font-weight: 600;">Patron Username (Select Member &amp; Role) *</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <!-- Quick Member Filter Search Input (100% width, no duplicate emoji) -->
+                    <div class="filter-wrapper" id="patron_filter_wrapper">
+                        <input 
+                            type="text" 
+                            id="patron_quick_search" 
+                            name="patron_quick_search"
+                            class="form-input" 
+                            placeholder="Type patron name substring to search..." 
+                            autocomplete="off"
+                        >
+                        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <div id="patron_dropdown_list" class="autocomplete-dropdown" style="display: none;"></div>
+                    </div>
+
+                    <!-- Direct Patron Username Dropdown Menu -->
+                    <select id="borrower_username" name="borrower_username" class="form-input" required size="1" style="cursor: pointer;">
+                        <option value="">-- Choose Member from Dropdown Menu --</option>
+                        {% if patrons %}
+                            <optgroup label="Staff Members" id="staffGroup">
+                                {% for p in patrons if p.role == 'Staff' %}
+                                    <option value="{{ p.username }}" data-role="staff" data-search="{{ p.username|lower }} staff {{ p.email|lower }}{% if p.has_blocking_issue %} overdue fine warning{% endif %}">
+                                        {{ p.username }} &mdash; [Staff] (ID: #{{ p.user_id }}){% if p.has_blocking_issue %} [⚠️ Has Overdue / Unpaid Fine]{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Students" id="studentGroup">
+                                {% for p in patrons if p.role == 'Student' %}
+                                    <option value="{{ p.username }}" data-role="student" data-search="{{ p.username|lower }} student {{ p.email|lower }}{% if p.has_blocking_issue %} overdue fine warning{% endif %}">
+                                        {{ p.username }} &mdash; [Student] (ID: #{{ p.user_id }}){% if p.has_blocking_issue %} [⚠️ Has Overdue / Unpaid Fine]{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endif %}
+                    </select>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Select the borrowing member from the dropdown menu (grouped by Staff and Student).</small>
+            </div>
+
+            <!-- 4. LOAN DURATION (Block Label) -->
+            <div class="form-group" style="margin-bottom: 28px;">
+                <label class="form-label" for="due_in_days" style="display: block; margin-bottom: 8px; font-weight: 600;">Loan Duration (Days)</label>
+                <input type="number" id="due_in_days" name="due_in_days" class="form-input" value="14" min="1" max="60" required>
+                <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 6px; display: block;">Standard policy is 14 days before Rs. 10/day overdue fine applies.</small>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="btnIssueLoan">Confirm &amp; Issue Book</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="patrons-data" type="application/json">{{ (patrons or [])|tojson }}</script>
+<script id="books-data" type="application/json">{{ (all_books or [])|tojson }}</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const bookSearch = document.getElementById('book_quick_search');
+        const bookDropdown = document.getElementById('book_dropdown_list');
+        const bookWrapper = document.getElementById('book_filter_wrapper');
+        const bookSelect = document.getElementById('book_id');
+        const copySelect = document.getElementById('copy_select');
+        const copyInput = document.getElementById('copy_id');
+        const copyBadge = document.getElementById('copy_status_badge');
+
+        const patronSearch = document.getElementById('patron_quick_search');
+        const patronDropdown = document.getElementById('patron_dropdown_list');
+        const patronWrapper = document.getElementById('patron_filter_wrapper');
+        const patronSelect = document.getElementById('borrower_username');
+        const issueLoanForm = document.getElementById('issueLoanForm');
+
+        const patronsData = JSON.parse(document.getElementById('patrons-data') ? document.getElementById('patrons-data').textContent : '[]');
+        const booksData = JSON.parse(document.getElementById('books-data') ? document.getElementById('books-data').textContent : '[]');
+
+        // All copy options
+        const allCopyOptions = copySelect ? Array.from(copySelect.querySelectorAll('option:not([value=""])')) : [];
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function highlightSubstring(text, query) {
+            if (!query || !text) return escapeHtml(text || '');
+            const lowerText = text.toLowerCase();
+            const lowerQuery = query.toLowerCase();
+            const idx = lowerText.indexOf(lowerQuery);
+            if (idx === -1) return escapeHtml(text);
+            return escapeHtml(text.substring(0, idx)) +
+                   '<span class="autocomplete-highlight">' +
+                   escapeHtml(text.substring(idx, idx + query.length)) +
+                   '</span>' +
+                   escapeHtml(text.substring(idx + query.length));
+        }
+
+        function updateActiveItem(items, activeIdx) {
+            items.forEach((it, idx) => {
+                if (idx === activeIdx) {
+                    it.classList.add('active');
+                    it.scrollIntoView({ block: 'nearest' });
+                } else {
+                    it.classList.remove('active');
+                }
+            });
+        }
+
+        // ==========================================
+        // 1. PATRON SUBSTRING DROPDOWN AUTOCOMPLETE
+        // ==========================================
+        let activePatronIdx = -1;
+
+        function renderPatronDropdown(filtered, query) {
+            if (!patronDropdown) return;
+            patronDropdown.innerHTML = '';
+            activePatronIdx = -1;
+
+            if (filtered.length === 0) {
+                patronDropdown.innerHTML = `<div class="autocomplete-empty">No members found containing "<strong>${escapeHtml(query)}</strong>"</div>`;
+                patronDropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.setAttribute('data-username', p.username);
+                item.setAttribute('data-index', idx);
+
+                const roleBadge = p.role === 'Staff'
+                    ? `<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); font-size: 0.7rem; padding: 2px 7px;">Staff</span>`
+                    : `<span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.7rem; padding: 2px 7px;">Student</span>`;
+
+                const issueBadge = p.has_blocking_issue
+                    ? `<span class="badge badge-danger" style="font-size: 0.68rem; padding: 2px 6px;" title="Overdue loans or unpaid fines exist">⚠️ Issue</span>`
+                    : '';
+
+                item.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden; text-align: left;">
+                        <div style="font-weight: 600; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 0.9rem;">${highlightSubstring(p.username, query)}</span>
+                            <span style="font-size: 0.72rem; color: #94a3b8; font-family: var(--font-mono);">#USR-${p.user_id}</span>
+                        </div>
+                        <div style="font-size: 0.76rem; color: #94a3b8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            ${highlightSubstring(p.email || '', query)}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        ${roleBadge}
+                        ${issueBadge}
+                    </div>
+                `;
+
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectPatron(p.username);
+                });
+
+                patronDropdown.appendChild(item);
+            });
+
+            patronDropdown.style.display = 'block';
+        }
+
+        function selectPatron(username) {
+            if (!username) return;
+            if (patronSearch) patronSearch.value = username;
+            if (patronSelect) {
+                patronSelect.value = username;
+                patronSelect.dispatchEvent(new Event('change'));
+            }
+            if (patronDropdown) patronDropdown.style.display = 'none';
+        }
+
+        function filterPatrons() {
+            const query = (patronSearch ? patronSearch.value : '').trim().toLowerCase();
+            if (!query) {
+                renderPatronDropdown(patronsData, '');
+                return;
+            }
+            const filtered = patronsData.filter(p => {
+                const unameMatch = p.username && p.username.toLowerCase().includes(query);
+                const emailMatch = p.email && p.email.toLowerCase().includes(query);
+                const roleMatch = p.role && p.role.toLowerCase().includes(query);
+                return unameMatch || emailMatch || roleMatch;
+            });
+            renderPatronDropdown(filtered, query);
+        }
+
+        if (patronSearch && patronDropdown) {
+            patronSearch.addEventListener('input', filterPatrons);
+            patronSearch.addEventListener('focus', filterPatrons);
+
+            patronSearch.addEventListener('keydown', function(e) {
+                const items = patronDropdown.querySelectorAll('.autocomplete-item');
+                if (!items.length || patronDropdown.style.display === 'none') {
+                    if (e.key === 'ArrowDown') {
+                        filterPatrons();
+                        e.preventDefault();
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activePatronIdx = (activePatronIdx + 1) % items.length;
+                    updateActiveItem(items, activePatronIdx);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activePatronIdx = (activePatronIdx - 1 + items.length) % items.length;
+                    updateActiveItem(items, activePatronIdx);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (activePatronIdx >= 0 && activePatronIdx < items.length) {
+                        items[activePatronIdx].click();
+                    } else if (items.length > 0) {
+                        items[0].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    patronDropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // ==========================================
+        // 2. BOOK AUTOCOMPLETE DROPDOWN
+        // ==========================================
+        let activeBookIdx = -1;
+
+        function renderBookDropdown(filtered, query) {
+            if (!bookDropdown) return;
+            bookDropdown.innerHTML = '';
+            activeBookIdx = -1;
+
+            if (filtered.length === 0) {
+                bookDropdown.innerHTML = `<div class="autocomplete-empty">No books found containing "<strong>${escapeHtml(query)}</strong>"</div>`;
+                bookDropdown.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach((b, idx) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.setAttribute('data-book-id', b.book_id);
+                item.setAttribute('data-index', idx);
+
+                const avail = b.available_copies_count || 0;
+                const availBadge = avail > 0
+                    ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.7rem; padding: 2px 7px;">${avail} Avail</span>`
+                    : `<span class="badge badge-danger" style="font-size: 0.68rem; padding: 2px 6px;">Out of Stock</span>`;
+
+                item.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden; text-align: left;">
+                        <div style="font-weight: 600; color: #f8fafc; font-size: 0.88rem;">
+                            ${highlightSubstring(b.title, query)}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            [${escapeHtml(b.category_name)}] &middot; ${highlightSubstring(b.authors || 'Unknown Author', query)} &middot; ISBN: ${highlightSubstring(b.isbn || '', query)}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        ${availBadge}
+                    </div>
+                `;
+
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectBook(b.book_id, b.title);
+                });
+
+                bookDropdown.appendChild(item);
+            });
+
+            bookDropdown.style.display = 'block';
+        }
+
+        function selectBook(bookId, title) {
+            if (!bookId) return;
+            if (bookSearch) bookSearch.value = title || '';
+            if (bookSelect) {
+                bookSelect.value = String(bookId);
+                bookSelect.dispatchEvent(new Event('change'));
+            }
+            if (bookDropdown) bookDropdown.style.display = 'none';
+        }
+
+        function filterBooks() {
+            const query = (bookSearch ? bookSearch.value : '').trim().toLowerCase();
+            if (!query) {
+                renderBookDropdown(booksData, '');
+                return;
+            }
+            const filtered = booksData.filter(b => {
+                const titleMatch = b.title && b.title.toLowerCase().includes(query);
+                const isbnMatch = b.isbn && b.isbn.toLowerCase().includes(query);
+                const authorMatch = b.authors && b.authors.toLowerCase().includes(query);
+                const catMatch = b.category_name && b.category_name.toLowerCase().includes(query);
+                return titleMatch || isbnMatch || authorMatch || catMatch;
+            });
+            renderBookDropdown(filtered, query);
+        }
+
+        if (bookSearch && bookDropdown) {
+            bookSearch.addEventListener('input', filterBooks);
+            bookSearch.addEventListener('focus', filterBooks);
+
+            bookSearch.addEventListener('keydown', function(e) {
+                const items = bookDropdown.querySelectorAll('.autocomplete-item');
+                if (!items.length || bookDropdown.style.display === 'none') {
+                    if (e.key === 'ArrowDown') {
+                        filterBooks();
+                        e.preventDefault();
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeBookIdx = (activeBookIdx + 1) % items.length;
+                    updateActiveItem(items, activeBookIdx);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeBookIdx = (activeBookIdx - 1 + items.length) % items.length;
+                    updateActiveItem(items, activeBookIdx);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (activeBookIdx >= 0 && activeBookIdx < items.length) {
+                        items[activeBookIdx].click();
+                    } else if (items.length > 0) {
+                        items[0].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    bookDropdown.style.display = 'none';
+                }
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (patronWrapper && !patronWrapper.contains(e.target)) {
+                if (patronDropdown) patronDropdown.style.display = 'none';
+            }
+            if (bookWrapper && !bookWrapper.contains(e.target)) {
+                if (bookDropdown) bookDropdown.style.display = 'none';
+            }
+        });
+
+        // Sync native select changes to text inputs
+        if (patronSelect && patronSearch) {
+            patronSelect.addEventListener('change', function() {
+                if (this.value) {
+                    patronSearch.value = this.value;
+                }
+            });
+        }
+
+        if (bookSelect && bookSearch) {
+            bookSelect.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if (opt && opt.value) {
+                    const found = booksData.find(b => String(b.book_id) === String(opt.value));
+                    if (found) {
+                        bookSearch.value = found.title;
+                    }
+                }
+            });
+        }
+
+        // Auto copy selection when book changes
+        if (bookSelect && copySelect && copyInput) {
+            bookSelect.addEventListener('change', function() {
+                const selectedBookId = this.value;
+                if (!selectedBookId) {
+                    allCopyOptions.forEach(opt => opt.style.display = '');
+                    if (copyBadge) copyBadge.style.display = 'none';
+                    return;
+                }
+
+                let matchingCopies = [];
+                allCopyOptions.forEach(opt => {
+                    if (opt.getAttribute('data-book-id') === selectedBookId) {
+                        opt.style.display = '';
+                        matchingCopies.push(opt);
+                    } else {
+                        opt.style.display = 'none';
+                    }
+                });
+
+                if (matchingCopies.length > 0) {
+                    copySelect.value = matchingCopies[0].value;
+                    copyInput.value = matchingCopies[0].value;
+
+                    if (copyBadge) {
+                        copyBadge.style.display = 'inline-block';
+                        copyBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                        copyBadge.style.color = '#34D399';
+                        copyBadge.style.border = '1px solid rgba(16, 185, 129, 0.35)';
+                        copyBadge.textContent = `✓ ${matchingCopies.length} Copy/Copies Available`;
+                    }
+                } else {
+                    copySelect.value = '';
+                    copyInput.value = '';
+                    if (copyBadge) {
+                        copyBadge.style.display = 'inline-block';
+                        copyBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                        copyBadge.style.color = '#F87171';
+                        copyBadge.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+                        copyBadge.textContent = '⚠️ Out of Stock';
+                    }
+                }
+            });
+        }
+
+        if (copySelect && copyInput) {
+            copySelect.addEventListener('change', function() {
+                if (this.value) {
+                    copyInput.value = this.value;
+                    const opt = copySelect.querySelector(`option[value="${this.value}"]`);
+                    if (opt && bookSelect) {
+                        const bId = opt.getAttribute('data-book-id');
+                        if (bId && bookSelect.value !== bId) {
+                            bookSelect.value = bId;
+                            bookSelect.dispatchEvent(new Event('change'));
+                        }
+                    }
+                    if (copyBadge) copyBadge.style.display = 'none';
+                }
+            });
+        }
+
+        // Form submit safety
+        if (issueLoanForm) {
+            issueLoanForm.addEventListener('submit', function() {
+                if (bookSelect && !bookSelect.value && bookSearch && bookSearch.value.trim()) {
+                    const bq = bookSearch.value.trim().toLowerCase();
+                    const bmatch = booksData.find(b =>
+                        (b.title && b.title.toLowerCase() === bq) ||
+                        (b.isbn && b.isbn.toLowerCase() === bq) ||
+                        (b.title && b.title.toLowerCase().includes(bq)) ||
+                        (b.isbn && b.isbn.toLowerCase().includes(bq))
+                    );
+                    if (bmatch) {
+                        bookSelect.value = bmatch.book_id;
+                        bookSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+                if (patronSelect && !patronSelect.value && patronSearch && patronSearch.value.trim()) {
+                    const q = patronSearch.value.trim().toLowerCase();
+                    const match = patronsData.find(p => p.username.toLowerCase() === q || p.username.toLowerCase().includes(q));
+                    if (match) {
+                        patronSelect.value = match.username;
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

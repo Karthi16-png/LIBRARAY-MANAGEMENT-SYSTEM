@@ -1,0 +1,354 @@
+[
+  {
+    "id": "01_public_login",
+    "fileName": "01_public_login.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\01_public_login.png",
+    "role": "Public",
+    "name": "Login Authentication Portal",
+    "urlPath": "/login"
+  },
+  {
+    "id": "02_public_register",
+    "fileName": "02_public_register.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\02_public_register.png",
+    "role": "Public",
+    "name": "Patron Registration Portal",
+    "urlPath": "/register"
+  },
+  {
+    "id": "03_admin_dashboard",
+    "fileName": "03_admin_dashboard.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\03_admin_dashboard.png",
+    "role": "Admin",
+    "name": "Executive Dashboard & System Metrics",
+    "urlPath": "/dashboard"
+  },
+  {
+    "id": "04_admin_catalog",
+    "fileName": "04_admin_catalog.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\04_admin_catalog.png",
+    "role": "Admin",
+    "name": "Central Book Catalog",
+    "urlPath": "/books"
+  },
+  {
+    "id": "05_admin_category_books",
+    "fileName": "05_admin_category_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\05_admin_category_books.png",
+    "role": "Admin",
+    "name": "Category Curricula & Academic Graph View",
+    "urlPath": "/category/1"
+  },
+  {
+    "id": "06_admin_issue_loan",
+    "fileName": "06_admin_issue_loan.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\06_admin_issue_loan.png",
+    "role": "Admin",
+    "name": "Circulation Desk - Direct Book Issuance",
+    "urlPath": "/issue_loan"
+  },
+  {
+    "id": "07_admin_loan_requests",
+    "fileName": "07_admin_loan_requests.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\07_admin_loan_requests.png",
+    "role": "Admin",
+    "name": "Loan Requests Queue & Collection Desk",
+    "urlPath": "/loan_requests"
+  },
+  {
+    "id": "08_admin_manage_users",
+    "fileName": "08_admin_manage_users.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\08_admin_manage_users.png",
+    "role": "Admin",
+    "name": "User Administration & Access Governance",
+    "urlPath": "/manage_users"
+  },
+  {
+    "id": "09_admin_learning_paths",
+    "fileName": "09_admin_learning_paths.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\09_admin_learning_paths.png",
+    "role": "Admin",
+    "name": "Academic Learning Roadmaps & Hierarchy",
+    "urlPath": "/learning_paths"
+  },
+  {
+    "id": "10_admin_ai_recommendations",
+    "fileName": "10_admin_ai_recommendations.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\10_admin_ai_recommendations.png",
+    "role": "Admin",
+    "name": "AI Collaborative Filtering Recommendations",
+    "urlPath": "/recommendations"
+  },
+  {
+    "id": "11_admin_graph_visualizer",
+    "fileName": "11_admin_graph_visualizer.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\11_admin_graph_visualizer.png",
+    "role": "Admin",
+    "name": "Global Knowledge Graph Explorer",
+    "urlPath": "/graph_visualizer"
+  },
+  {
+    "id": "12_admin_book_bridge",
+    "fileName": "12_admin_book_bridge.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\12_admin_book_bridge.png",
+    "role": "Admin",
+    "name": "Book Bridge - Shortest Path Separation",
+    "urlPath": "/book_bridge"
+  },
+  {
+    "id": "13_admin_centrality_analytics",
+    "fileName": "13_admin_centrality_analytics.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\13_admin_centrality_analytics.png",
+    "role": "Admin",
+    "name": "Centrality Analytics & Influencer Lab",
+    "urlPath": "/library_analytics"
+  },
+  {
+    "id": "14_admin_change_password",
+    "fileName": "14_admin_change_password.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\14_admin_change_password.png",
+    "role": "Admin",
+    "name": "Security Credentials & Password Management",
+    "urlPath": "/change_password"
+  },
+  {
+    "id": "15_librarian_dashboard",
+    "fileName": "15_librarian_dashboard.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\15_librarian_dashboard.png",
+    "role": "Librarian",
+    "name": "Circulation Desk Dashboard",
+    "urlPath": "/dashboard"
+  },
+  {
+    "id": "16_librarian_catalog",
+    "fileName": "16_librarian_catalog.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\16_librarian_catalog.png",
+    "role": "Librarian",
+    "name": "Catalog & Inventory Management",
+    "urlPath": "/books"
+  },
+  {
+    "id": "17_librarian_category_books",
+    "fileName": "17_librarian_category_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\17_librarian_category_books.png",
+    "role": "Librarian",
+    "name": "Category Curricula & Prerequisites",
+    "urlPath": "/category/1"
+  },
+  {
+    "id": "18_librarian_issue_loan",
+    "fileName": "18_librarian_issue_loan.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\18_librarian_issue_loan.png",
+    "role": "Librarian",
+    "name": "Circulation Desk - Issue Book Loan",
+    "urlPath": "/issue_loan"
+  },
+  {
+    "id": "19_librarian_loan_requests",
+    "fileName": "19_librarian_loan_requests.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\19_librarian_loan_requests.png",
+    "role": "Librarian",
+    "name": "Loan Requests & Collection Handover",
+    "urlPath": "/loan_requests"
+  },
+  {
+    "id": "20_librarian_learning_paths",
+    "fileName": "20_librarian_learning_paths.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\20_librarian_learning_paths.png",
+    "role": "Librarian",
+    "name": "Learning Roadmaps & Course Hierarchy",
+    "urlPath": "/learning_paths"
+  },
+  {
+    "id": "21_librarian_ai_recommendations",
+    "fileName": "21_librarian_ai_recommendations.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\21_librarian_ai_recommendations.png",
+    "role": "Librarian",
+    "name": "Graph Recommendations & Circulation Trends",
+    "urlPath": "/recommendations"
+  },
+  {
+    "id": "22_librarian_graph_visualizer",
+    "fileName": "22_librarian_graph_visualizer.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\22_librarian_graph_visualizer.png",
+    "role": "Librarian",
+    "name": "System Circulation Knowledge Graph",
+    "urlPath": "/graph_visualizer"
+  },
+  {
+    "id": "23_librarian_book_bridge",
+    "fileName": "23_librarian_book_bridge.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\23_librarian_book_bridge.png",
+    "role": "Librarian",
+    "name": "Book Bridge Shortest Path Degrees",
+    "urlPath": "/book_bridge"
+  },
+  {
+    "id": "24_librarian_centrality_analytics",
+    "fileName": "24_librarian_centrality_analytics.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\24_librarian_centrality_analytics.png",
+    "role": "Librarian",
+    "name": "Centrality Analytics & Influencer Lab",
+    "urlPath": "/library_analytics"
+  },
+  {
+    "id": "25_librarian_change_password",
+    "fileName": "25_librarian_change_password.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\25_librarian_change_password.png",
+    "role": "Librarian",
+    "name": "Security Credentials & Password Management",
+    "urlPath": "/change_password"
+  },
+  {
+    "id": "26_staff_dashboard",
+    "fileName": "26_staff_dashboard.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\26_staff_dashboard.png",
+    "role": "Staff",
+    "name": "Faculty & Staff Academic Dashboard",
+    "urlPath": "/dashboard"
+  },
+  {
+    "id": "27_staff_search_books",
+    "fileName": "27_staff_search_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\27_staff_search_books.png",
+    "role": "Staff",
+    "name": "Catalog Search & Academic Materials",
+    "urlPath": "/books"
+  },
+  {
+    "id": "28_staff_category_books",
+    "fileName": "28_staff_category_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\28_staff_category_books.png",
+    "role": "Staff",
+    "name": "Category Curricula & Academic Graph View",
+    "urlPath": "/category/1"
+  },
+  {
+    "id": "29_staff_learning_paths",
+    "fileName": "29_staff_learning_paths.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\29_staff_learning_paths.png",
+    "role": "Staff",
+    "name": "Departmental Learning Roadmaps",
+    "urlPath": "/learning_paths"
+  },
+  {
+    "id": "30_staff_recommendations",
+    "fileName": "30_staff_recommendations.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\30_staff_recommendations.png",
+    "role": "Staff",
+    "name": "Recommended For You (Research & Curriculum)",
+    "urlPath": "/recommendations"
+  },
+  {
+    "id": "31_staff_my_fines",
+    "fileName": "31_staff_my_fines.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\31_staff_my_fines.png",
+    "role": "Staff",
+    "name": "Staff Fines & Dues Summary",
+    "urlPath": "/my_fines"
+  },
+  {
+    "id": "32_staff_graph_visualizer",
+    "fileName": "32_staff_graph_visualizer.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\32_staff_graph_visualizer.png",
+    "role": "Staff",
+    "name": "Live Academic Knowledge Graph",
+    "urlPath": "/graph_visualizer"
+  },
+  {
+    "id": "33_staff_book_bridge",
+    "fileName": "33_staff_book_bridge.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\33_staff_book_bridge.png",
+    "role": "Staff",
+    "name": "Book Bridge - Shortest Path Traversal",
+    "urlPath": "/book_bridge"
+  },
+  {
+    "id": "34_staff_centrality_analytics",
+    "fileName": "34_staff_centrality_analytics.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\34_staff_centrality_analytics.png",
+    "role": "Staff",
+    "name": "Centrality Analytics & Influencer Lab",
+    "urlPath": "/library_analytics"
+  },
+  {
+    "id": "35_staff_change_password",
+    "fileName": "35_staff_change_password.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\35_staff_change_password.png",
+    "role": "Staff",
+    "name": "Security Credentials & Password Management",
+    "urlPath": "/change_password"
+  },
+  {
+    "id": "36_student_dashboard",
+    "fileName": "36_student_dashboard.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\36_student_dashboard.png",
+    "role": "Student",
+    "name": "Student Academic Dashboard & Borrowings",
+    "urlPath": "/dashboard"
+  },
+  {
+    "id": "37_student_search_books",
+    "fileName": "37_student_search_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\37_student_search_books.png",
+    "role": "Student",
+    "name": "Book Catalog & Reservation Desk",
+    "urlPath": "/books"
+  },
+  {
+    "id": "38_student_category_books",
+    "fileName": "38_student_category_books.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\38_student_category_books.png",
+    "role": "Student",
+    "name": "Course Prerequisites & Curricula Catalog",
+    "urlPath": "/category/1"
+  },
+  {
+    "id": "39_student_learning_paths",
+    "fileName": "39_student_learning_paths.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\39_student_learning_paths.png",
+    "role": "Student",
+    "name": "Student Learning Roadmaps & Study Tracks",
+    "urlPath": "/learning_paths"
+  },
+  {
+    "id": "40_student_recommendations",
+    "fileName": "40_student_recommendations.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\40_student_recommendations.png",
+    "role": "Student",
+    "name": "AI Recommended Books & Study Partners",
+    "urlPath": "/recommendations"
+  },
+  {
+    "id": "41_student_my_fines",
+    "fileName": "41_student_my_fines.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\41_student_my_fines.png",
+    "role": "Student",
+    "name": "Personal Overdue Fines & Payment History",
+    "urlPath": "/my_fines"
+  },
+  {
+    "id": "42_student_graph_visualizer",
+    "fileName": "42_student_graph_visualizer.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\42_student_graph_visualizer.png",
+    "role": "Student",
+    "name": "Personal Learning Graph Visualizer",
+    "urlPath": "/graph_visualizer"
+  },
+  {
+    "id": "43_student_book_bridge",
+    "fileName": "43_student_book_bridge.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\43_student_book_bridge.png",
+    "role": "Student",
+    "name": "Book Bridge Degrees of Separation",
+    "urlPath": "/book_bridge"
+  },
+  {
+    "id": "44_student_change_password",
+    "fileName": "44_student_change_password.png",
+    "filePath": "C:\\Users\\ckart\\OneDrive\\Documents\\DBS DA\\scratch\\screenshots\\44_student_change_password.png",
+    "role": "Student",
+    "name": "Security Credentials & Password Management",
+    "urlPath": "/change_password"
+  }
+]

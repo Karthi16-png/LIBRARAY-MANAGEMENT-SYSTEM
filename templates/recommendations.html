@@ -1,0 +1,928 @@
+{% extends "base.html" %}
+
+{% block title %}AI / Graph Recommendations | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}AI Book Recommendations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recs-container {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    /* Page Header */
+    .recs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .recs-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .recs-sub {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+        max-width: 720px;
+    }
+
+    /* Collapsible Accordion Toggle Panel */
+    .graph-accordion-wrapper {
+        margin-top: 36px;
+        margin-bottom: 24px;
+    }
+
+    .graph-toggle-btn {
+        width: 100%;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+    }
+
+    .graph-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(99, 102, 241, 0.45);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .graph-toggle-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .graph-toggle-icon {
+        font-size: 1.15rem;
+    }
+
+    .graph-toggle-title {
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
+
+    .graph-toggle-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .graph-toggle-hint {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    .graph-chevron {
+        transition: transform 0.25s ease;
+        color: var(--text-muted);
+    }
+
+    .graph-collapse-panel {
+        animation: fadeInPanel 0.25s ease-out;
+    }
+
+    @keyframes fadeInPanel {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mini Graph Relationship Canvas Card */
+    .graph-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .graph-card-header {
+        padding: 16px 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .graph-card-title-group h2 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .graph-card-title-group p {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+        font-family: var(--font-mono);
+    }
+
+    .graph-card-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .graph-btn-sm {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .graph-btn-sm:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border-color: var(--border-hover);
+    }
+
+    /* Canvas Body */
+    .mini-canvas-body {
+        height: 420px;
+        min-height: 400px;
+        position: relative;
+        background: radial-gradient(circle at 50% 50%, #111827 0%, #0B0F19 100%);
+    }
+
+    #rec-network-canvas {
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+    }
+
+    #rec-network-canvas:active {
+        cursor: grabbing;
+    }
+
+    /* Graph Legend Footer */
+    .graph-card-footer {
+        padding: 12px 24px;
+        background: rgba(255, 255, 255, 0.02);
+        border-top: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.76rem;
+        color: var(--text-secondary);
+    }
+
+    .legend-list {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .legend-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .legend-tag-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    /* Recommendation Cards Grid */
+    .recs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .rec-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .rec-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(245, 158, 11, 0.5);
+        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.12);
+    }
+
+    .rec-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .rec-book-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.35;
+    }
+
+    .mutual-badge {
+        background: rgba(245, 158, 11, 0.15);
+        color: #FBBF24;
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        padding: 4px 9px;
+        border-radius: var(--radius-full);
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .rec-meta-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 18px;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+    }
+
+    .rec-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rec-meta-item svg {
+        width: 14px;
+        height: 14px;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+    .rec-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    /* Jaccard Study Partners Card Grid */
+    .partners-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 10px;
+    }
+
+    .partners-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .partners-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .jaccard-formula-badge {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: #93C5FD;
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+    }
+
+    .partners-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 18px;
+    }
+
+    .partner-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 14px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .partner-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(99, 102, 241, 0.45);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    }
+
+    .partner-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .partner-user-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .partner-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.95rem;
+        color: #C7D2FE;
+    }
+
+    .partner-username {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .partner-role-tag {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+    }
+
+    .jaccard-match-pill {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(59, 130, 246, 0.18));
+        color: #34D399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        font-weight: 800;
+        font-size: 0.78rem;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .partner-shared-box {
+        background: var(--bg-surface-soft);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: var(--radius-md);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .partner-shared-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .partner-books-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .partner-book-item {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .partner-book-item svg {
+        flex-shrink: 0;
+        color: #818CF8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recs-container">
+    <!-- Header -->
+    <div class="recs-header">
+        <div>
+            <h1 class="recs-title">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#F59E0B" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                AI & Graph Collaborative Recommendations
+            </h1>
+            <p class="recs-sub">
+                {% if session.get('role') in ['Admin', 'Librarian'] or is_admin_view %}
+                Personalized book suggestions based on patron borrowing history, shared peer reading interests, and mutual topics across the library collection.
+                {% else %}
+                Personalized book suggestions based on your borrowing history, shared peer reading interests, and mutual topics across the library collection.
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('graph_visualizer') }}" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Open Full Graph Explorer
+            </a>
+        </div>
+    </div>
+
+    {% if session.get('role') in ['Admin', 'Librarian'] or is_admin_view %}
+    <!-- Admin Oversight Banner -->
+    <div class="admin-rec-banner" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 20px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.15)); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: var(--radius-lg); margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(168, 85, 247, 0.2); display: flex; align-items: center; justify-content: center; color: #C084FC;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #E9D5FF; letter-spacing: -0.01em;">
+                    {{ session.get('role') }} View: Global Patron Collaborative Filtering Network
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                    Administrative mode: Displaying global peer borrowing clusters across all student and staff readers instead of personal loans.
+                </div>
+            </div>
+        </div>
+        <span class="badge" style="background: rgba(168, 85, 247, 0.25); color: #E9D5FF; border: 1px solid rgba(168, 85, 247, 0.4); padding: 5px 12px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600;">
+            {{ session.get('role') }} Oversight
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations Cards (Top of Page for Production UX) -->
+    {% if recommendations %}
+    <div>
+        <h2 class="section-title" style="margin-top: 5px;">
+            {% if session.get('role') in ['Admin', 'Librarian'] or is_admin_view %}
+            Recommended Books (Patron Cohort)
+            {% else %}
+            Recommended Books For You
+            {% endif %}
+        </h2>
+        <div class="recs-grid">
+            {% for book in recommendations %}
+            <div class="rec-card" id="book-card-{{ book.book_id }}">
+                <div>
+                    <div class="rec-card-top">
+                        <h3 class="rec-book-title" title="{{ book.title }}">{{ book.title }}</h3>
+                        <span class="mutual-badge" title="Number of peer borrowers who share reading taste">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            {% if book.badge_label %}
+                                {{ book.badge_label }}
+                            {% elif book.mutual_borrowers is not none and (book.mutual_borrowers > 0 or session.get('role') != 'Staff') %}
+                                {{ book.mutual_borrowers }} {{ 'Reader' if book.mutual_borrowers == 1 else 'Readers' }}
+                            {% else %}
+                                Curriculum Match
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="rec-meta-list">
+                        <div class="rec-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span>{{ book.authors or 'Unknown Author' }}</span>
+                        </div>
+                        <div class="rec-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                            <span>{{ book.category_name or 'General Category' }}</span>
+                        </div>
+                        <div class="rec-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="7" y2="16"></line><line x1="11" y1="8" x2="11" y2="16"></line><line x1="15" y1="8" x2="15" y2="12"></line></svg>
+                            <span>ISBN: {{ book.isbn }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rec-card-footer">
+                    {% if book.available_copies > 0 %}
+                        <span class="badge badge-success">
+                            {{ book.available_copies }} Available
+                        </span>
+                        {% if session.get('role') in ['Student', 'Staff'] %}
+                        <form method="POST" action="{{ url_for('request_loan', book_id=book.book_id) }}" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">
+                                Request Loan
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge badge-warning">
+                            All Copies Checked Out
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 48px 24px;">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">No Loan History Yet</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 480px; margin: 0 auto 20px auto;">
+            Borrow books from the catalog to activate personalized graph collaborative filtering tailored to your reading profile!
+        </p>
+        <a href="{{ url_for('books') }}" class="btn btn-primary">
+            Browse Catalog
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Role-Scoped Jaccard Study Partners Section -->
+    {% if session.get('role') != 'Staff' and study_partners %}
+    <div class="partners-section">
+        <div class="partners-header">
+            <h2 class="partners-title">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#6366F1" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                {% if session.get('role') in ['Admin', 'Librarian'] %}
+                    Student Cohort Study Pairs
+                {% else %}
+                    Top Study Partners
+                {% endif %}
+            </h2>
+            <span class="jaccard-formula-badge" title="Jaccard Index = |A ∩ B| / |A ∪ B|">
+                Jaccard Index: |A ∩ B| / |A ∪ B|
+            </span>
+        </div>
+
+        <div class="partners-grid">
+            {% for partner in study_partners %}
+            <div class="partner-card">
+                <div>
+                    <div class="partner-card-top">
+                        <div class="partner-user-group">
+                            <div class="partner-avatar">
+                                {% if '&' in partner.peer_name %}
+                                    👥
+                                {% else %}
+                                    {{ partner.peer_name[:2].upper() }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="partner-username">{{ partner.peer_name }}</div>
+                                <div class="partner-role-tag">
+                                    {% if session.get('role') in ['Admin', 'Librarian'] %}
+                                        Student Pair
+                                    {% else %}
+                                        Matched Peer Student
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="jaccard-match-pill" title="Jaccard Reading Similarity Score">
+                            ⚡ {{ partner.jaccard_pct }}% Match
+                        </div>
+                    </div>
+
+                    <div class="partner-shared-box" style="margin-top: 14px;">
+                        <div class="partner-shared-title">
+                            <span>Shared Reading Overlap</span>
+                            <span style="color: #38BDF8;">{{ partner.shared_count }} Book{% if partner.shared_count != 1 %}s{% endif %}</span>
+                        </div>
+                        <ul class="partner-books-list">
+                            {% for title in partner.shared_titles %}
+                            <li class="partner-book-item" title="{{ title }}">
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                                <span>{{ title }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Collapsible Accordion: Multi-Hop Recommendation Path Vis.js Graph -->
+    <div class="graph-accordion-wrapper">
+        <button type="button" class="graph-toggle-btn" id="recGraphToggleBtn" onclick="toggleRecGraphAccordion()" aria-expanded="false">
+            <div class="graph-toggle-left">
+                <span class="graph-toggle-icon">🔍</span>
+                <span class="graph-toggle-title">Explain Recommendations (View Neo4j Traversal Graph)</span>
+                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #A5B4FC; font-size: 0.72rem; padding: 2px 8px; border-radius: var(--radius-full);">4-Column Hierarchy</span>
+            </div>
+            <div class="graph-toggle-right">
+                <span class="graph-toggle-hint">Click to expand graph proof</span>
+                <svg class="graph-chevron" id="recGraphChevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+        </button>
+
+        <div class="graph-collapse-panel" id="recGraphPanel" style="display: none;">
+            <div class="graph-card" style="margin-top: 14px;">
+                <div class="graph-card-header">
+                    <div class="graph-card-title-group">
+                        <h2>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            Multi-Hop Recommendation Path
+                        </h2>
+                        {% if session.get('role') in ['Admin', 'Librarian'] or is_admin_view %}
+                        <p>(Active Patron) &rarr; [:borrowed] &rarr; (Shared Book / Category) &rarr; [:shared] &rarr; (Peer Readers) &rarr; [:recommends] &rarr; (Recommended Book)</p>
+                        {% elif session.get('role') == 'Staff' %}
+                        <p>(You) &rarr; [:borrowed] &rarr; (Borrowed Book) &rarr; [:shared] &rarr; (Shared Category/Author/Prerequisite) &rarr; [:recommends] &rarr; (Recommended Book)</p>
+                        {% else %}
+                        <p>(You) &rarr; [:borrowed] &rarr; (Shared Book / Category) &rarr; [:shared] &rarr; (Peer Readers) &rarr; [:recommends] &rarr; (Recommended Book)</p>
+                        {% endif %}
+                    </div>
+                    <div class="graph-card-tools">
+                        <button class="graph-btn-sm" onclick="fitRecGraph()">
+                            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                            Reset View
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mini-canvas-body">
+                    <div id="rec-network-canvas"></div>
+                </div>
+
+                <div class="graph-card-footer">
+                    <div class="legend-list">
+                        <span class="legend-tag"><span class="legend-tag-dot" style="background: #3B82F6;"></span> {% if session.get('role') in ['Admin', 'Librarian'] or is_admin_view %}⭐ Active Patron{% else %}⭐ You{% endif %}</span>
+                        <span class="legend-tag"><span class="legend-tag-dot" style="background: #10B981;"></span> 📖 {% if session.get('role') == 'Staff' %}Borrowed Book{% else %}Read Book{% endif %}</span>
+                        <span class="legend-tag"><span class="legend-tag-dot" style="background: #F59E0B;"></span> 📁 Shared Category</span>
+                        <span class="legend-tag"><span class="legend-tag-dot" style="background: #8B5CF6;"></span> {% if session.get('role') == 'Staff' %}🔗 Prerequisite / Author{% else %}👥 Peer Reader{% endif %}</span>
+                        <span class="legend-tag"><span class="legend-tag-dot" style="background: #EAB308;"></span> ✨ Recommended Book</span>
+                    </div>
+                    <div>
+                        <span style="font-family: var(--font-mono); color: var(--text-muted);">4-Column Multi-Hop Flow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Vis.js Network CDN -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<script>
+    let recNetwork = null;
+    let recGraphLoaded = false;
+
+    function toggleRecGraphAccordion() {
+        const panel = document.getElementById("recGraphPanel");
+        const chevron = document.getElementById("recGraphChevron");
+        const btn = document.getElementById("recGraphToggleBtn");
+
+        if (panel.style.display === "none" || panel.style.display === "") {
+            panel.style.display = "block";
+            btn.setAttribute("aria-expanded", "true");
+            chevron.style.transform = "rotate(180deg)";
+            if (!recGraphLoaded) {
+                loadRecGraph();
+            } else if (recNetwork) {
+                setTimeout(() => {
+                    recNetwork.redraw();
+                    recNetwork.fit({ padding: 35 });
+                }, 80);
+            }
+        } else {
+            panel.style.display = "none";
+            btn.setAttribute("aria-expanded", "false");
+            chevron.style.transform = "rotate(0deg)";
+        }
+    }
+
+    function loadRecGraph() {
+        fetch("/api/graph_data?view=recommendations")
+            .then(res => res.json())
+            .then(data => {
+                const nodes = data.nodes || [];
+                const edges = data.edges || [];
+                renderRecNetwork(nodes, edges);
+            })
+            .catch(err => {
+                console.error("Error loading recommendation graph:", err);
+            });
+    }
+
+    function renderRecNetwork(nodesList, edgesList) {
+        const container = document.getElementById("rec-network-canvas");
+        if (!container) return;
+
+        const data = {
+            nodes: new vis.DataSet(nodesList),
+            edges: new vis.DataSet(edgesList)
+        };
+
+        const options = {
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    direction: 'LR',
+                    sortMethod: 'directed',
+                    levelSeparation: 230,
+                    nodeSpacing: 110,
+                    treeSpacing: 130
+                }
+            },
+            physics: {
+                enabled: false
+            },
+            nodes: {
+                shape: 'box',
+                margin: 10,
+                widthConstraint: { maximum: 140 },
+                borderWidth: 2,
+                font: {
+                    multi: true,
+                    size: 13,
+                    face: 'Inter, sans-serif',
+                    color: '#FFFFFF'
+                },
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 6 }
+            },
+            groups: {
+                CurrentUser: {
+                    color: {
+                        background: '#1E3A8A',
+                        border: '#60A5FA',
+                        highlight: { background: '#2563EB', border: '#93C5FD' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#DBEAFE' }
+                },
+                SharedBook: {
+                    color: {
+                        background: '#064E3B',
+                        border: '#34D399',
+                        highlight: { background: '#059669', border: '#6EE7B7' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#D1FAE5' }
+                },
+                Category: {
+                    color: {
+                        background: '#78350F',
+                        border: '#F59E0B',
+                        highlight: { background: '#B45309', border: '#FCD34D' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#FEF3C7' }
+                },
+                PeerUser: {
+                    color: {
+                        background: '#4C1D95',
+                        border: '#A78BFA',
+                        highlight: { background: '#6D28D9', border: '#C4B5FD' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#EDE9FE' }
+                },
+                RecommendedBook: {
+                    color: {
+                        background: '#713F12',
+                        border: '#FBBF24',
+                        highlight: { background: '#B45309', border: '#FDE047' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#FEF08A' }
+                },
+                Author: {
+                    color: {
+                        background: '#1E293B',
+                        border: '#94A3B8',
+                        highlight: { background: '#334155', border: '#CBD5E1' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#F1F5F9' }
+                },
+                Prerequisite: {
+                    color: {
+                        background: '#312E81',
+                        border: '#818CF8',
+                        highlight: { background: '#3730A3', border: '#A5B4FC' }
+                    },
+                    font: { multi: true, size: 13, face: 'Inter, sans-serif', color: '#E0E7FF' }
+                }
+            },
+            edges: {
+                arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+                color: { color: 'rgba(148, 163, 184, 0.45)', highlight: '#60A5FA' },
+                font: {
+                    size: 10,
+                    align: 'middle',
+                    background: '#0f172a',
+                    color: '#94A3B8',
+                    strokeWidth: 0
+                },
+                smooth: {
+                    type: 'cubicBezier',
+                    forceDirection: 'horizontal',
+                    roundness: 0.25
+                }
+            },
+            interaction: {
+                hover: true,
+                zoomView: true,
+                dragView: true
+            }
+        };
+
+        if (recNetwork) {
+            recNetwork.destroy();
+        }
+
+        recNetwork = new vis.Network(container, data, options);
+
+        // Auto-fit after drawing
+        recNetwork.once("afterDrawing", function() {
+            recNetwork.fit({ padding: 35 });
+        });
+
+        // Highlight card when clicking recommended book node
+        recNetwork.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const clickedNode = nodesList.find(n => n.id === nodeId);
+                if (clickedNode && clickedNode.properties && clickedNode.properties.book_id) {
+                    const card = document.getElementById("book-card-" + clickedNode.properties.book_id);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.style.borderColor = '#F59E0B';
+                        card.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.4)';
+                        setTimeout(() => {
+                            card.style.borderColor = '';
+                            card.style.boxShadow = '';
+                        }, 2500);
+                    }
+                }
+            }
+        });
+    }
+
+    function fitRecGraph() {
+        if (recNetwork) {
+            recNetwork.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' }, padding: 35 });
+        }
+    }
+</script>
+{% endblock %}

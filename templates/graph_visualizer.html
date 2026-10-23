@@ -1,0 +1,1151 @@
+{% extends "base.html" %}
+
+{% block title %}Live Graph Explorer | VITCC LIBRARY Knowledge Graph{% endblock %}
+{% block breadcrumb %}Knowledge Graph Explorer{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Full height Graph Visualizer Container */
+    .graph-page-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: calc(100vh - 120px);
+        min-height: 680px;
+    }
+
+    /* Top Control Header */
+    .graph-header-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .graph-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .graph-title-group h1 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .graph-title-group p {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* View Switcher Tabs */
+    .view-switcher {
+        display: inline-flex;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 4px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border-subtle);
+        gap: 4px;
+    }
+
+    .view-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .view-btn.active {
+        background: var(--accent-primary);
+        color: #FFFFFF;
+        box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    .view-btn:hover:not(.active) {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Second Row: Filters, Search & Actions */
+    .graph-filter-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .filter-pills-group {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        border: 1px solid;
+        transition: all 0.15s ease;
+        opacity: 0.95;
+    }
+
+    .filter-pill.inactive {
+        opacity: 0.35;
+        filter: grayscale(80%);
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        background: transparent !important;
+        color: var(--text-muted) !important;
+    }
+
+    .filter-pill.disabled {
+        opacity: 0.35 !important;
+        filter: grayscale(80%) !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        color: var(--text-muted) !important;
+    }
+
+    .pill-count {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        opacity: 0.85;
+        margin-left: 2px;
+    }
+
+    .filter-pill .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    /* Colors for Filter Pills */
+    .pill-user       { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border-color: rgba(59, 130, 246, 0.35); }
+    .pill-user .dot  { background: #3B82F6; }
+    .pill-book       { background: rgba(16, 185, 129, 0.15); color: #34D399; border-color: rgba(16, 185, 129, 0.35); }
+    .pill-book .dot  { background: #10B981; }
+    .pill-author     { background: rgba(139, 92, 246, 0.15); color: #C084FC; border-color: rgba(139, 92, 246, 0.35); }
+    .pill-author .dot{ background: #8B5CF6; }
+    .pill-cat        { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border-color: rgba(245, 158, 11, 0.35); }
+    .pill-cat .dot   { background: #F59E0B; }
+    .pill-pub        { background: rgba(236, 72, 153, 0.15); color: #F472B6; border-color: rgba(236, 72, 153, 0.35); }
+    .pill-pub .dot   { background: #EC4899; }
+    .pill-copy       { background: rgba(20, 184, 166, 0.15); color: #2DD4BF; border-color: rgba(20, 184, 166, 0.35); }
+    .pill-copy .dot  { background: #14B8A6; }
+    .pill-loan       { background: rgba(6, 182, 212, 0.15); color: #22D3EE; border-color: rgba(6, 182, 212, 0.35); }
+    .pill-loan .dot  { background: #06B6D4; }
+    .pill-fine       { background: rgba(239, 68, 68, 0.15); color: #F87171; border-color: rgba(239, 68, 68, 0.35); }
+    .pill-fine .dot  { background: #EF4444; }
+    .pill-request    { background: rgba(249, 115, 22, 0.15); color: #FB923C; border-color: rgba(249, 115, 22, 0.35); }
+    .pill-request .dot{ background: #F97316; }
+
+    /* Search & Canvas Tools */
+    .graph-tools-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .graph-search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .graph-search-box input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-full);
+        padding: 6px 14px 6px 32px;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        outline: none;
+        width: 190px;
+        transition: all 0.2s ease;
+    }
+
+    .graph-search-box input:focus {
+        border-color: var(--accent-primary);
+        width: 240px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .graph-search-box svg {
+        position: absolute;
+        left: 10px;
+        width: 14px;
+        height: 14px;
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+
+    .btn-icon-tool {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-icon-tool:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        border-color: var(--border-hover);
+    }
+
+    .btn-icon-tool.active {
+        background: var(--accent-primary);
+        color: #FFFFFF;
+        border-color: var(--accent-primary);
+    }
+
+    /* Main Canvas & Detail Sidebar Workspace */
+    .graph-workspace {
+        flex: 1;
+        position: relative;
+        background: radial-gradient(circle at 50% 50%, #111827 0%, #0B0F19 100%);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        display: flex;
+    }
+
+    #network-canvas {
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+    }
+
+    #network-canvas:active {
+        cursor: grabbing;
+    }
+
+
+
+    /* Floating Stats Badge */
+    .graph-stats-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(17, 24, 39, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: flex;
+        gap: 12px;
+        z-index: 10;
+        font-family: var(--font-mono);
+    }
+
+    .graph-stats-badge strong {
+        color: var(--accent-primary);
+    }
+
+    /* Side Detail Drawer (Collapsible) */
+    .node-detail-drawer {
+        width: 340px;
+        background: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(16px);
+        border-left: 1px solid var(--border-subtle);
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 20;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .node-detail-drawer.open {
+        transform: translateX(0);
+    }
+
+    .drawer-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .drawer-header-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .drawer-group-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+        letter-spacing: 0.05em;
+    }
+
+    .drawer-close-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        transition: color 0.15s;
+    }
+
+    .drawer-close-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .drawer-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .drawer-node-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+
+    .drawer-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .property-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .prop-row {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .prop-key {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .prop-val {
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        word-break: break-word;
+        margin-top: 2px;
+    }
+
+    .connected-nodes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .connected-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-subtle);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .connected-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--accent-primary);
+    }
+
+    .connected-item-label {
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+    }
+
+    .connected-item-rel {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+    }
+
+    /* Loading Overlay */
+    .graph-loading {
+        position: absolute;
+        inset: 0;
+        background: rgba(11, 15, 25, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        z-index: 30;
+        backdrop-filter: blur(8px);
+        transition: opacity 0.3s;
+    }
+
+    .graph-spinner {
+        width: 38px;
+        height: 38px;
+        border: 3px solid rgba(59, 130, 246, 0.2);
+        border-top-color: var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="graph-page-container">
+    <!-- Top Control Bar Card -->
+    <div class="graph-header-card">
+        <!-- Title & View Switcher Row -->
+        <div class="graph-title-row">
+            <div class="graph-title-group">
+                <h1>
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    Live Graph Explorer
+                </h1>
+                <p>Interactive real-time traversal of library knowledge graph nodes, loans, and relationships.</p>
+            </div>
+
+            <!-- View Mode Switcher -->
+            <div class="view-switcher" id="viewSwitcher">
+                {% if user_role in ['Admin', 'Librarian'] %}
+                <button class="view-btn active" data-view="full" onclick="switchGraphView('full')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    Full System Graph
+                </button>
+                <button class="view-btn" data-view="catalog" onclick="switchGraphView('catalog')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                    Catalog Knowledge Graph
+                </button>
+                <button class="view-btn" data-view="personal" onclick="switchGraphView('personal')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Global Circulation & Fines Subgraph
+                </button>
+                {% else %}
+                <button class="view-btn active" data-view="personal" onclick="switchGraphView('personal')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    My Personal Borrowing Subgraph
+                </button>
+                <button class="view-btn" data-view="catalog" onclick="switchGraphView('catalog')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                    Full Catalog Knowledge Graph
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Filter Pills & Search Tools Row -->
+        <div class="graph-filter-row">
+            <!-- Node Type Toggle Pills -->
+            <div class="filter-pills-group" id="nodeFilters">
+                <span class="filter-pill pill-user active" data-group="User" onclick="toggleGroupFilter('User')">
+                    <span class="dot"></span> Users <span class="pill-count" id="count-User"></span>
+                </span>
+                <span class="filter-pill pill-book active" data-group="Book" onclick="toggleGroupFilter('Book')">
+                    <span class="dot"></span> Books <span class="pill-count" id="count-Book"></span>
+                </span>
+                <span class="filter-pill pill-author active" data-group="Author" onclick="toggleGroupFilter('Author')">
+                    <span class="dot"></span> Authors <span class="pill-count" id="count-Author"></span>
+                </span>
+                <span class="filter-pill pill-cat active" data-group="Category" onclick="toggleGroupFilter('Category')">
+                    <span class="dot"></span> Categories <span class="pill-count" id="count-Category"></span>
+                </span>
+                <span class="filter-pill pill-pub active" data-group="Publisher" onclick="toggleGroupFilter('Publisher')">
+                    <span class="dot"></span> Publishers <span class="pill-count" id="count-Publisher"></span>
+                </span>
+                <span class="filter-pill pill-copy active" data-group="Copy" onclick="toggleGroupFilter('Copy')">
+                    <span class="dot"></span> Copies <span class="pill-count" id="count-Copy"></span>
+                </span>
+                <span class="filter-pill pill-loan active" data-group="Loan" onclick="toggleGroupFilter('Loan')">
+                    <span class="dot"></span> Loans <span class="pill-count" id="count-Loan"></span>
+                </span>
+                <span class="filter-pill pill-fine active" data-group="Fine" onclick="toggleGroupFilter('Fine')">
+                    <span class="dot"></span> Fines <span class="pill-count" id="count-Fine"></span>
+                </span>
+                <span class="filter-pill pill-request active" data-group="LoanRequest" onclick="toggleGroupFilter('LoanRequest')">
+                    <span class="dot"></span> Requests <span class="pill-count" id="count-LoanRequest"></span>
+                </span>
+            </div>
+
+            <!-- Search & Canvas Actions -->
+            <div class="graph-tools-group">
+                <div class="graph-search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="nodeSearchInput" placeholder="Search node or title..." oninput="handleNodeSearch(this.value)">
+                </div>
+                <button class="btn-icon-tool active" id="physicsToggleBtn" title="Pause Physics Simulation (Freeze Layout)" onclick="togglePhysics()" aria-label="Pause Physics Simulation">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button class="btn-icon-tool" title="Reset View / Fit Screen" onclick="fitGraphView()" aria-label="Reset View">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                </button>
+                <button class="btn-icon-tool" id="reStabilizeBtn" title="Re-stabilize Layout" onclick="reStabilize()" aria-label="Re-stabilize Layout">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Network Canvas Area with Slide-out Drawer -->
+    <div class="graph-workspace">
+        <!-- Live Loading Spinner -->
+        <div class="graph-loading" id="graphLoading">
+            <div class="graph-spinner"></div>
+            <span style="font-size: 0.88rem; color: var(--text-secondary); font-weight: 500;">Traversing AuraDB Graph...</span>
+        </div>
+
+        <!-- Floating Stats Counter -->
+        <div class="graph-stats-badge" id="graphStatsBadge">
+            <span>Nodes: <strong id="statNodesCount">0</strong></span>
+            <span>Relationships: <strong id="statEdgesCount">0</strong></span>
+            <span>View: <strong id="statViewName">Loading...</strong></span>
+        </div>
+
+        <!-- Canvas Element -->
+        <div id="network-canvas"></div>
+
+
+        <!-- Node Property Detail Drawer (Collapsible) -->
+        <div class="node-detail-drawer" id="nodeDrawer">
+            <div class="drawer-header">
+                <div class="drawer-header-info">
+                    <span class="drawer-group-badge" id="drawerBadge">NODE</span>
+                </div>
+                <button class="drawer-close-btn" onclick="closeDrawer()" title="Close details">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div>
+                    <h2 class="drawer-node-title" id="drawerNodeTitle">Select a Node</h2>
+                </div>
+
+                <div>
+                    <div class="drawer-section-title">Node Properties</div>
+                    <div class="property-grid" id="drawerProperties">
+                        <!-- Key-Value pairs populated dynamically -->
+                    </div>
+                </div>
+
+                <div>
+                    <div class="drawer-section-title">Connected Relationships (<span id="connectedCount">0</span>)</div>
+                    <div class="connected-nodes-list" id="drawerConnections">
+                        <!-- Neighbor nodes populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Vis.js Network Standalone UMD Bundle -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+<script>
+    // State management
+    let network = null;
+    let allNodes = [];
+    let allEdges = [];
+    let nodesDataSet = null;
+    let edgesDataSet = null;
+    let currentView = "{{ 'full' if user_role in ['Admin', 'Librarian'] else 'personal' }}";
+    let isPhysicsActive = true;
+    const PLAY_ICON_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
+    const PAUSE_ICON_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
+
+    function updatePhysicsBtnUI(hasNodes = true) {
+        const btn = document.getElementById("physicsToggleBtn");
+        const reBtn = document.getElementById("reStabilizeBtn");
+        if (!btn) return;
+
+        if (!hasNodes) {
+            // When there are no visible nodes, physics simulation has no effect,
+            // so we remove/hide the physics button and re-stabilize button
+            btn.style.display = "none";
+            if (reBtn) reBtn.style.display = "none";
+            return;
+        }
+
+        btn.style.display = "inline-flex";
+        if (reBtn) reBtn.style.display = "inline-flex";
+
+        btn.classList.toggle("active", isPhysicsActive);
+        if (isPhysicsActive) {
+            // Physics running: replace the play symbol with the pause symbol
+            btn.innerHTML = PAUSE_ICON_SVG;
+            btn.setAttribute("title", "Pause Physics Simulation (Freeze Layout)");
+            btn.setAttribute("aria-label", "Pause Physics Simulation");
+        } else {
+            // Physics paused/frozen: show play symbol to allow unfreezing/resuming
+            btn.innerHTML = PLAY_ICON_SVG;
+            btn.setAttribute("title", "Resume Physics Simulation (Unfreeze Layout)");
+            btn.setAttribute("aria-label", "Resume Physics Simulation");
+        }
+    }
+
+    let activeGroups = new Set(["User", "Book", "Author", "Category", "Publisher", "Copy", "Loan", "Fine", "LoanRequest", "CurrentUser", "SharedBook", "RecommendedBook", "PeerUser", "Prerequisite", "StartBook", "TargetBook", "IntermediateBook"]);
+
+    // Vis-Network Group Color Definitions
+    const groupConfigurations = {
+        User: {
+            color: { background: '#1D4ED8', border: '#3B82F6', highlight: { background: '#2563EB', border: '#60A5FA' } },
+            shape: 'dot',
+            size: 24,
+            font: { color: '#F9FAFB', face: 'Plus Jakarta Sans', size: 13 }
+        },
+        CurrentUser: {
+            color: { background: '#2563EB', border: '#60A5FA', highlight: { background: '#3B82F6', border: '#93C5FD' } },
+            shape: 'star',
+            size: 28,
+            font: { color: '#F9FAFB', face: 'Plus Jakarta Sans', size: 14, strokeWidth: 2, strokeColor: '#000000' }
+        },
+        Book: {
+            color: { background: '#047857', border: '#10B981', highlight: { background: '#059669', border: '#34D399' } },
+            shape: 'dot',
+            size: 24,
+            font: { color: '#F9FAFB', face: 'Plus Jakarta Sans', size: 13 }
+        },
+        SharedBook: {
+            color: { background: '#059669', border: '#34D399', highlight: { background: '#10B981', border: '#6EE7B7' } },
+            shape: 'dot',
+            size: 24,
+            font: { color: '#F9FAFB', face: 'Plus Jakarta Sans', size: 13 }
+        },
+        RecommendedBook: {
+            color: { background: '#B45309', border: '#F59E0B', highlight: { background: '#D97706', border: '#FCD34D' } },
+            shape: 'star',
+            size: 28,
+            font: { color: '#FDE047', face: 'Plus Jakarta Sans', size: 14, strokeWidth: 2, strokeColor: '#000000' }
+        },
+        Author: {
+            color: { background: '#6D28D9', border: '#8B5CF6', highlight: { background: '#7C3AED', border: '#C4B5FD' } },
+            shape: 'dot',
+            size: 20,
+            font: { color: '#E9D5FF', face: 'Plus Jakarta Sans', size: 12 }
+        },
+        Category: {
+            color: { background: '#B45309', border: '#F59E0B', highlight: { background: '#D97706', border: '#FCD34D' } },
+            shape: 'diamond',
+            size: 22,
+            font: { color: '#FEF3C7', face: 'Plus Jakarta Sans', size: 13 }
+        },
+        Publisher: {
+            color: { background: '#BE185D', border: '#EC4899', highlight: { background: '#DB2777', border: '#F9A8D4' } },
+            shape: 'dot',
+            size: 19,
+            font: { color: '#FCE7F3', face: 'Plus Jakarta Sans', size: 12 }
+        },
+        Copy: {
+            color: { background: '#0F766E', border: '#14B8A6', highlight: { background: '#0D9488', border: '#5EEAD4' } },
+            shape: 'square',
+            size: 16,
+            font: { color: '#CCFBF1', face: 'Plus Jakarta Sans', size: 11 }
+        },
+        Loan: {
+            color: { background: '#0E7490', border: '#06B6D4', highlight: { background: '#0891B2', border: '#67E8F9' } },
+            shape: 'dot',
+            size: 18,
+            font: { color: '#CFFAFE', face: 'Plus Jakarta Sans', size: 11 }
+        },
+        Fine: {
+            color: { background: '#B91C1C', border: '#EF4444', highlight: { background: '#DC2626', border: '#FCA5A5' } },
+            shape: 'triangle',
+            size: 20,
+            font: { color: '#FEE2E2', face: 'Plus Jakarta Sans', size: 12 }
+        },
+        LoanRequest: {
+            color: { background: '#C2410C', border: '#F97316', highlight: { background: '#EA580C', border: '#FDBA74' } },
+            shape: 'hexagon',
+            size: 18,
+            font: { color: '#FFEDD5', face: 'Plus Jakarta Sans', size: 12 }
+        },
+        PeerUser: {
+            color: { background: '#4F46E5', border: '#6366F1', highlight: { background: '#4338CA', border: '#A5B4FC' } },
+            shape: 'dot',
+            size: 22,
+            font: { color: '#E0E7FF', face: 'Plus Jakarta Sans', size: 13 }
+        }
+    };
+
+    // Initialize Network on Page Load
+    document.addEventListener("DOMContentLoaded", () => {
+        loadGraphData(currentView);
+    });
+
+    // Fetch data from /api/graph_data
+    function loadGraphData(viewName) {
+        currentView = viewName;
+        document.getElementById("graphLoading").style.display = "flex";
+        if (viewName === 'personal') {
+            document.getElementById("statViewName").textContent = ("{{ user_role }}" === "Admin" || "{{ user_role }}" === "Librarian") ? "GLOBAL CIRCULATION & FINES" : "PERSONAL BORROWING";
+        } else {
+            document.getElementById("statViewName").textContent = viewName.toUpperCase();
+        }
+
+        fetch(`/api/graph_data?view=${viewName}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error loading graph data: " + data.error);
+                    return;
+                }
+
+                allNodes = data.nodes || [];
+                allEdges = data.edges || [];
+
+                document.getElementById("statNodesCount").textContent = allNodes.length;
+                document.getElementById("statEdgesCount").textContent = allEdges.length;
+
+                // Live count calculation for the 9 filter chips
+                const groupCounts = {
+                    User: 0,
+                    Book: 0,
+                    Author: 0,
+                    Category: 0,
+                    Publisher: 0,
+                    Copy: 0,
+                    Loan: 0,
+                    Fine: 0,
+                    LoanRequest: 0
+                };
+
+                allNodes.forEach(node => {
+                    let g = node.group;
+                    if (g === "CurrentUser" || g === "PeerUser") g = "User";
+                    if (g === "SharedBook" || g === "RecommendedBook" || g === "Prerequisite" || g === "StartBook" || g === "TargetBook" || g === "IntermediateBook") g = "Book";
+                    if (groupCounts[g] !== undefined) {
+                        groupCounts[g]++;
+                    }
+                });
+
+                // Update filter chips count and dim/disable chips with 0 nodes
+                document.querySelectorAll("#nodeFilters .filter-pill").forEach(pill => {
+                    const group = pill.getAttribute("data-group");
+                    const count = groupCounts[group] || 0;
+                    const countElem = pill.querySelector(".pill-count");
+                    if (countElem) {
+                        countElem.textContent = `(${count})`;
+                    }
+
+                    if (count === 0) {
+                        pill.classList.add("disabled");
+                        pill.classList.remove("active");
+                        pill.classList.remove("inactive");
+                    } else {
+                        pill.classList.remove("disabled");
+                        if (activeGroups.has(group)) {
+                            pill.classList.add("active");
+                            pill.classList.remove("inactive");
+                        } else {
+                            pill.classList.remove("active");
+                            pill.classList.add("inactive");
+                        }
+                    }
+                });
+
+                renderNetwork(allNodes, allEdges);
+            })
+            .catch(err => {
+                console.error("Graph fetch failed:", err);
+                alert("Failed to connect to graph API: " + err);
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    const loader = document.getElementById("graphLoading");
+                    if (loader) {
+                        loader.style.opacity = "0";
+                        setTimeout(() => loader.style.display = "none", 300);
+                    }
+                    if (network) {
+                        network.fit({
+                            animation: { duration: 400, easingFunction: 'easeInOutQuad' }
+                        });
+                    }
+                }, 400);
+            });
+    }
+
+    // Render Vis.js Network
+    function renderNetwork(nodesList, edgesList) {
+        const container = document.getElementById("network-canvas");
+
+        // Filter based on active groups
+        const filteredNodes = nodesList.filter(n => {
+            if (activeGroups.has(n.group)) return true;
+            if (n.group === "CurrentUser" && activeGroups.has("User")) return true;
+            if (["SharedBook", "RecommendedBook", "Prerequisite", "StartBook", "TargetBook", "IntermediateBook"].includes(n.group) && activeGroups.has("Book")) return true;
+            return false;
+        });
+        const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+        const filteredEdges = edgesList.filter(e => visibleNodeIds.has(e.from) && visibleNodeIds.has(e.to));
+
+        const statNodes = document.getElementById("statNodesCount");
+        const statEdges = document.getElementById("statEdgesCount");
+        if (statNodes) statNodes.textContent = filteredNodes.length;
+        if (statEdges) statEdges.textContent = filteredEdges.length;
+
+        updatePhysicsBtnUI(filteredNodes.length > 0);
+
+        nodesDataSet = new vis.DataSet(filteredNodes);
+        edgesDataSet = new vis.DataSet(filteredEdges);
+
+        const data = {
+            nodes: nodesDataSet,
+            edges: edgesDataSet
+        };
+
+        const options = {
+            groups: groupConfigurations,
+            nodes: {
+                borderWidth: 2,
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(0,0,0,0.6)',
+                    size: 8,
+                    x: 2,
+                    y: 2
+                }
+            },
+            edges: {
+                arrows: {
+                    to: { enabled: true, scaleFactor: 0.85 }
+                },
+                color: {
+                    color: 'rgba(156, 163, 175, 0.45)',
+                    highlight: '#38BDF8',
+                    hover: '#60A5FA'
+                },
+                font: {
+                    size: 9,
+                    align: 'top',
+                    color: '#94a3b8',
+                    strokeWidth: 3,
+                    strokeColor: '#090d16'
+                },
+                smooth: {
+                    type: 'curvedCW',
+                    roundness: 0.15
+                }
+            },
+            physics: {
+                enabled: isPhysicsActive,
+                solver: 'barnesHut',
+                barnesHut: {
+                    gravitationalConstant: -4500,
+                    centralGravity: 0.25,
+                    springLength: 165,
+                    springConstant: 0.03,
+                    damping: 0.15
+                },
+                stabilization: {
+                    iterations: 150,
+                    updateInterval: 25
+                }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 150,
+                navigationButtons: false,
+                keyboard: true,
+                zoomView: true,
+                dragView: true
+            }
+        };
+
+        if (network) {
+            network.destroy();
+        }
+
+        network = new vis.Network(container, data, options);
+
+        // Click event on node
+        network.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const selectedNode = allNodes.find(n => n.id === nodeId);
+                if (selectedNode) {
+                    openDrawer(selectedNode);
+                }
+            } else {
+                closeDrawer();
+            }
+        });
+
+        // Double click to zoom and center
+        network.on("doubleClick", function(params) {
+            if (params.nodes.length > 0) {
+                network.focus(params.nodes[0], {
+                    scale: 1.4,
+                    animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+                });
+            }
+        });
+    }
+
+    // Switch between graph views (Full / Catalog / Personal)
+    function switchGraphView(viewName) {
+        document.querySelectorAll("#viewSwitcher .view-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.getAttribute("data-view") === viewName);
+        });
+        closeDrawer();
+        isPhysicsActive = true;
+        updatePhysicsBtnUI(true);
+        activeGroups = new Set(["User", "Book", "Author", "Category", "Publisher", "Copy", "Loan", "Fine", "LoanRequest", "CurrentUser", "SharedBook", "RecommendedBook", "PeerUser", "Prerequisite", "StartBook", "TargetBook", "IntermediateBook"]);
+        loadGraphData(viewName);
+    }
+
+    // Toggle specific node group filter on/off
+    function toggleGroupFilter(groupName) {
+        const pill = document.querySelector(`.filter-pill[data-group="${groupName}"]`);
+        if (pill && pill.classList.contains("disabled")) {
+            return;
+        }
+        if (activeGroups.has(groupName)) {
+            activeGroups.delete(groupName);
+            if (groupName === "User") {
+                activeGroups.delete("CurrentUser");
+                activeGroups.delete("PeerUser");
+            }
+            if (groupName === "Book") {
+                activeGroups.delete("SharedBook");
+                activeGroups.delete("RecommendedBook");
+                activeGroups.delete("Prerequisite");
+                activeGroups.delete("StartBook");
+                activeGroups.delete("TargetBook");
+                activeGroups.delete("IntermediateBook");
+            }
+            pill.classList.remove("active");
+            pill.classList.add("inactive");
+        } else {
+            activeGroups.add(groupName);
+            if (groupName === "User") {
+                activeGroups.add("CurrentUser");
+                activeGroups.add("PeerUser");
+            }
+            if (groupName === "Book") {
+                activeGroups.add("SharedBook");
+                activeGroups.add("RecommendedBook");
+                activeGroups.add("Prerequisite");
+                activeGroups.add("StartBook");
+                activeGroups.add("TargetBook");
+                activeGroups.add("IntermediateBook");
+            }
+            pill.classList.add("active");
+            pill.classList.remove("inactive");
+        }
+        renderNetwork(allNodes, allEdges);
+    }
+
+    // Search and focus node
+    function handleNodeSearch(query) {
+        if (!network || !query || query.trim() === "") return;
+        const q = query.toLowerCase().trim();
+        const currentNodes = nodesDataSet ? nodesDataSet.get() : allNodes;
+        const found = currentNodes.find(n => {
+            if (n.label && n.label.toLowerCase().includes(q)) return true;
+            if (n.properties) {
+                return Object.values(n.properties).some(v => String(v).toLowerCase().includes(q));
+            }
+            return false;
+        });
+
+        if (found) {
+            network.selectNodes([found.id]);
+            network.focus(found.id, {
+                scale: 1.3,
+                animation: { duration: 500, easingFunction: 'easeInOutQuad' }
+            });
+            openDrawer(found);
+        }
+    }
+
+    // Toggle Physics engine
+    function togglePhysics() {
+        if (!network) return;
+        isPhysicsActive = !isPhysicsActive;
+        const hasNodes = nodesDataSet && nodesDataSet.length > 0;
+        updatePhysicsBtnUI(hasNodes);
+        network.setOptions({ physics: { enabled: isPhysicsActive } });
+    }
+
+    // Fit entire graph in view
+    function fitGraphView() {
+        if (network) {
+            network.fit({
+                animation: { duration: 700, easingFunction: 'easeInOutQuad' }
+            });
+        }
+    }
+
+    // Re-stabilize physics
+    function reStabilize() {
+        if (!network) return;
+        // If physics was paused, re-enable it first because network.stabilize() requires physics to be active
+        if (!isPhysicsActive) {
+            isPhysicsActive = true;
+            const hasNodes = nodesDataSet && nodesDataSet.length > 0;
+            updatePhysicsBtnUI(hasNodes);
+            network.setOptions({ physics: { enabled: true } });
+        }
+        network.stabilize(100);
+    }
+
+    // Drawer management
+    function openDrawer(node) {
+        const drawer = document.getElementById("nodeDrawer");
+        const badge = document.getElementById("drawerBadge");
+        const title = document.getElementById("drawerNodeTitle");
+        const propContainer = document.getElementById("drawerProperties");
+        const connContainer = document.getElementById("drawerConnections");
+
+        badge.textContent = node.group;
+        const cfg = groupConfigurations[node.group] || { color: { border: '#3B82F6', background: '#1D4ED8' } };
+        badge.style.backgroundColor = cfg.color.background;
+        badge.style.color = '#FFFFFF';
+        badge.style.border = `1px solid ${cfg.color.border}`;
+
+        title.textContent = node.properties.title || node.properties.username || node.properties.name || node.label;
+
+        // Render properties
+        propContainer.innerHTML = "";
+        const props = node.properties || {};
+        for (const [k, v] of Object.entries(props)) {
+            const row = document.createElement("div");
+            row.className = "prop-row";
+            const keySpan = document.createElement("span");
+            keySpan.className = "prop-key";
+            keySpan.textContent = k.replace(/_/g, ' ');
+            const valSpan = document.createElement("span");
+            valSpan.className = "prop-val";
+            valSpan.textContent = v !== null && v !== undefined ? String(v) : "";
+            row.appendChild(keySpan);
+            row.appendChild(valSpan);
+            propContainer.appendChild(row);
+        }
+
+        // Render connected relationships
+        connContainer.innerHTML = "";
+        const visibleNodeIds = new Set(nodesDataSet ? nodesDataSet.getIds() : allNodes.map(n => n.id));
+        const connectedEdges = allEdges.filter(e => {
+            const otherId = e.from === node.id ? e.to : (e.to === node.id ? e.from : null);
+            return otherId !== null && visibleNodeIds.has(otherId);
+        });
+        document.getElementById("connectedCount").textContent = connectedEdges.length;
+
+        connectedEdges.forEach(e => {
+            const isOutgoing = e.from === node.id;
+            const targetId = isOutgoing ? e.to : e.from;
+            const targetNode = allNodes.find(n => n.id === targetId);
+
+            if (targetNode && visibleNodeIds.has(targetNode.id)) {
+                const item = document.createElement("div");
+                item.className = "connected-item";
+                const labelSpan = document.createElement("span");
+                labelSpan.className = "connected-item-label";
+                labelSpan.textContent = targetNode.label || "";
+                const relSpan = document.createElement("span");
+                relSpan.className = "connected-item-rel";
+                relSpan.textContent = `${isOutgoing ? '→' : '←'} :${e.label || ''}`;
+                item.appendChild(labelSpan);
+                item.appendChild(relSpan);
+                item.onclick = () => {
+                    network.selectNodes([targetNode.id]);
+                    network.focus(targetNode.id, {
+                        scale: 1.3,
+                        animation: { duration: 500, easingFunction: 'easeInOutQuad' }
+                    });
+                    openDrawer(targetNode);
+                };
+                connContainer.appendChild(item);
+            }
+        });
+
+        drawer.classList.add("open");
+    }
+
+    function closeDrawer() {
+        document.getElementById("nodeDrawer").classList.remove("open");
+        if (network) {
+            network.unselectAll();
+        }
+    }
+</script>
+{% endblock %}

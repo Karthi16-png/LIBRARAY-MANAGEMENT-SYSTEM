@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}My Fines | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}My Fines & Penalties{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 28px;">
+    <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;">My Financial Statements</h1>
+    <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">Review assessed overdue fines and payment statuses</p>
+</div>
+
+<div class="data-panel" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden;">
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; font-size: 0.95rem;">Fine Ledger Records</span>
+        <span class="badge badge-info">{{ fines|length if fines else 0 }} Incurred</span>
+    </div>
+
+    <div class="table-container" style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+            <thead>
+                <tr style="background: rgba(255, 255, 255, 0.02); color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase;">
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Fine ID</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Book Title</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Loan Ref</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Due Date</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Return Date</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Fine Amount</th>
+                    <th style="padding: 14px 24px; border-bottom: 1px solid var(--border-subtle);">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if fines %}
+                    {% for fine in fines %}
+                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                        <td style="padding: 16px 24px; font-family: var(--font-mono); font-size: 0.8rem;">#FN-{{ fine.fine_id }}</td>
+                        <td style="padding: 16px 24px; color: var(--text-primary); font-weight: 600;">{{ fine.book_title or fine.title }}</td>
+                        <td style="padding: 16px 24px; font-family: var(--font-mono); font-size: 0.8rem;">#LN-{{ fine.loan_id }}</td>
+                        <td style="padding: 16px 24px; color: var(--text-secondary);">{{ fine.due_date.strftime('%b %d, %Y') if fine.due_date else 'N/A' }}</td>
+                        <td style="padding: 16px 24px; color: var(--text-secondary);">{{ fine.return_date.strftime('%b %d, %Y') if fine.return_date else 'Not Returned' }}</td>
+                        <td style="padding: 16px 24px; font-weight: 700; color: var(--danger-text);">Rs. {{ "%.2f"|format(fine.fine_amount) }}</td>
+                        <td style="padding: 16px 24px;">
+                            {% if fine.payment_status == 'Paid' %}
+                                <span class="badge badge-success">Paid</span>
+                            {% elif fine.payment_status == 'Waived' %}
+                                <span class="badge badge-info">Waived</span>
+                            {% else %}
+                                <span class="badge badge-danger">Unpaid</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="padding: 48px 24px; text-align: center; color: var(--text-muted);">
+                            <div style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">Zero Fine</div>
+                            <p style="margin-top: 4px;">You have no disciplinary fines recorded on your account.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

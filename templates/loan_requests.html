@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Requests & Collection Desk | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Loan Requests Queue{% endblock %}
+
+{% block extra_css %}
+<style>
+    .queue-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .queue-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+    }
+
+    .queue-sub {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+
+    .btn-approve {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        border-radius: var(--radius-sm);
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-approve:hover {
+        background: #059669;
+        color: #FFFFFF;
+        border-color: #059669;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+        transform: translateY(-1px);
+    }
+
+    .btn-confirm-pickup {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #059669;
+        color: #FFFFFF;
+        border: 1px solid #059669;
+        border-radius: var(--radius-sm);
+        padding: 7px 16px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+    }
+
+    .btn-confirm-pickup:hover {
+        background: #10B981;
+        border-color: #10B981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-reject {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(239, 68, 68, 0.12);
+        color: #F87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: var(--radius-sm);
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-reject:hover {
+        background: #DC2626;
+        color: #FFFFFF;
+        border-color: #DC2626;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+        transform: translateY(-1px);
+    }
+
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        min-width: 780px;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.88rem;
+    }
+
+    .data-table th {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+        background: rgba(255, 255, 255, 0.015);
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="queue-header">
+    <div>
+        <h1 class="queue-title">Borrowing Permission Requests &amp; Collection Desk</h1>
+        <p class="queue-sub">Authorize student/staff loan requests and record physical book collections when patrons pick up their books</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35); font-size: 0.85rem; padding: 6px 14px;">
+            {{ awaiting_pickup|length if awaiting_pickup else 0 }} Awaiting Pickup
+        </span>
+        <span class="badge badge-info" style="font-size: 0.85rem; padding: 6px 14px;">
+            {{ requests|length if requests else 0 }} Pending Review
+        </span>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 1. COLLECTION DESK: AWAITING PHYSICAL PICKUP TABLE                        -->
+<!-- ========================================================================= -->
+<div class="data-panel" style="margin-bottom: 32px; border: 1px solid rgba(59, 130, 246, 0.25);">
+    <div class="panel-header" style="background: rgba(59, 130, 246, 0.05);">
+        <div>
+            <span class="panel-title" style="color: #60A5FA; display: flex; align-items: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><polyline points="10 2 10 10 13 7 16 10 16 2"></polyline></svg>
+                Circulation Desk: Ready for Physical Collection
+            </span>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                Patrons who have had their requests approved and physical copies reserved. Confirm collection when the patron receives the book.
+            </div>
+        </div>
+        <div>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93C5FD; font-size: 0.78rem; padding: 4px 10px;">
+                {{ awaiting_pickup|length if awaiting_pickup else 0 }} Ready for Handover
+            </span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Patron Name &amp; Role</th>
+                    <th>Book Details</th>
+                    <th>Reserved Copy ID</th>
+                    <th>Request&nbsp;Timestamp</th>
+                    <th style="text-align: right;">Handover Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if awaiting_pickup %}
+                    {% for p in awaiting_pickup %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;">
+                            #REQ-{{ p.request_id }}
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ p.borrower_name }}</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                <span>{{ p.borrower_email }}</span>
+                                {% if p.borrower_role == 'Staff' %}
+                                    <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC; font-size: 0.68rem; padding: 1px 6px;">Staff</span>
+                                {% else %}
+                                    <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; font-size: 0.68rem; padding: 1px 6px;">Student</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="book-title-cell">{{ p.book_title }}</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                                [{{ p.category_name }}] &bull; ISBN: {{ p.isbn }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if p.copy_id %}
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.35); font-weight: 700; font-size: 0.82rem; padding: 4px 10px;">
+                                    Copy #{{ p.copy_id }} Reserved
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">Copy Reserved</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.82rem; white-space: nowrap;">
+                            {{ p.request_date.strftime('%b %d, %Y') if p.request_date else 'N/A' }}
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                <!-- Confirm Pickup / Hand Over Button -->
+                                <form method="POST" action="{{ url_for('loan_requests') }}" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <input type="hidden" name="request_id" value="{{ p.request_id }}">
+                                    <input type="hidden" name="action" value="confirm_pickup">
+                                    <button 
+                                        type="submit" 
+                                        class="btn-confirm-pickup" 
+                                        title="Confirm physical book handover to {{ p.borrower_name }} and activate loan"
+                                        onclick="return confirm('Confirm physical handover of \'{{ p.book_title|escape }}\' (Copy #{{ p.copy_id }}) to {{ p.borrower_name }}? Active loan will be issued for 14 days.');"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        ✓ Hand Over &amp; Confirm Collection
+                                    </button>
+                                </form>
+
+                                <!-- Cancel Reservation Button -->
+                                <form method="POST" action="{{ url_for('loan_requests') }}" style="display: inline;" onsubmit="return confirm('Cancel pickup hold for {{ p.borrower_name }}? Physical copy will be returned to inventory.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <input type="hidden" name="request_id" value="{{ p.request_id }}">
+                                    <input type="hidden" name="action" value="cancel_pickup">
+                                    <button type="submit" class="btn-reject" title="Cancel hold and return copy to inventory">
+                                        Cancel Hold
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state" style="padding: 24px;">
+                            <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-secondary);">No Patrons Awaiting Pickup</div>
+                            <p style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">Approved requests waiting for physical desk collection will appear here.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 2. PENDING AUTHORIZATION QUEUE (WAITING APPROVAL)                         -->
+<!-- ========================================================================= -->
+<div class="data-panel">
+    <div class="panel-header">
+        <div>
+            <span class="panel-title">Pending Authorization Queue</span>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                Review submitted patron borrowing permission requests and reserve inventory copies
+            </div>
+        </div>
+        <div>
+            <span class="badge badge-info" style="font-size: 0.78rem; padding: 4px 10px;">
+                {{ requests|length if requests else 0 }} Pending Review
+            </span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Borrower Name &amp; Role</th>
+                    <th>Book Details</th>
+                    <th>Available Copies</th>
+                    <th>Request&nbsp;Timestamp</th>
+                    <th style="text-align: right;">Authorization</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if requests %}
+                    {% for req in requests %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;">
+                            #REQ-{{ req.request_id }}
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ req.borrower_name }}</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                <span>{{ req.borrower_email }}</span>
+                                {% if req.borrower_role == 'Staff' %}
+                                    <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #C084FC; font-size: 0.68rem; padding: 1px 6px;">Staff</span>
+                                {% else %}
+                                    <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; font-size: 0.68rem; padding: 1px 6px;">Student</span>
+                                {% endif %}
+                            </div>
+                            <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;">
+                                {% if (req.borrower_committed_total or 0) >= 3 %}
+                                    <span class="badge badge-danger" style="font-size: 0.68rem; padding: 2px 7px;" title="{{ req.borrower_active_loans or 0 }} active loans + {{ req.borrower_awaiting_pickup or 0 }} approved holds awaiting pickup">
+                                        Threshold Full ({{ req.borrower_committed_total }}/3: {{ req.borrower_active_loans or 0 }} Loans, {{ req.borrower_awaiting_pickup or 0 }} Pickup)
+                                    </span>
+                                {% else %}
+                                    <span class="badge" style="background: rgba(255, 255, 255, 0.06); color: var(--text-secondary); font-size: 0.68rem; padding: 2px 7px; border: 1px solid var(--border-subtle);">
+                                        Committed: {{ req.borrower_committed_total or 0 }} / 3 ({{ req.borrower_active_loans or 0 }} Loans, {{ req.borrower_awaiting_pickup or 0 }} Pickup)
+                                    </span>
+                                {% endif %}
+                                {% if (req.borrower_overdue_loans or 0) > 0 %}
+                                    <span class="badge badge-danger" style="font-size: 0.68rem; padding: 2px 7px;">
+                                        {{ req.borrower_overdue_loans }} Overdue Loan(s)
+                                    </span>
+                                {% endif %}
+                                {% if (req.borrower_unpaid_fines or 0) > 0 %}
+                                    <span class="badge badge-danger" style="font-size: 0.68rem; padding: 2px 7px;">
+                                        Unpaid Fine: Rs. {{ "%.2f"|format(req.borrower_unpaid_fines) }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="book-title-cell">{{ req.book_title }}</div>
+                            <div style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 2px;">
+                                ISBN: {{ req.isbn }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if req.available_copies_count > 0 %}
+                                <span class="badge badge-success">{{ req.available_copies_count }} In Stock</span>
+                            {% else %}
+                                <span class="badge badge-danger">0 Copies Available</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.82rem; white-space: nowrap;">
+                            {{ req.request_date.strftime('%b %d, %Y') if req.request_date else 'N/A' }}
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                {% if req.available_copies_count <= 0 or (req.borrower_unpaid_fines or 0) > 0 or (req.borrower_overdue_loans or 0) > 0 or (req.borrower_committed_total or 0) >= 3 %}
+                                    <button 
+                                        type="button" 
+                                        class="btn" 
+                                        disabled 
+                                        style="background: rgba(239, 68, 68, 0.12); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.78rem; padding: 6px 12px; cursor: not-allowed; border-radius: var(--radius-md); font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"
+                                        {% if (req.borrower_unpaid_fines or 0) > 0 and req.available_copies_count <= 0 %}
+                                            title="Cannot approve: Patron has unpaid fines of Rs. {{ '%.2f'|format(req.borrower_unpaid_fines) }} AND 0 copies available in stock."
+                                        {% elif (req.borrower_unpaid_fines or 0) > 0 %}
+                                            title="Cannot approve: Patron has unpaid fines of Rs. {{ '%.2f'|format(req.borrower_unpaid_fines) }}. They must clear overdue fines first."
+                                        {% elif req.available_copies_count <= 0 %}
+                                            title="Cannot approve: No physical copies available in inventory (0 Stock)."
+                                        {% elif (req.borrower_overdue_loans or 0) > 0 %}
+                                            title="Cannot approve: Patron has {{ req.borrower_overdue_loans }} overdue loan(s). They must return overdue books first."
+                                        {% else %}
+                                            title="Cannot approve: Patron reached maximum threshold of 3 books. They must return or collect existing books first."
+                                        {% endif %}
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                        Blocked: {% if (req.borrower_unpaid_fines or 0) > 0 and req.available_copies_count <= 0 %}Fine / 0 Stock{% elif (req.borrower_unpaid_fines or 0) > 0 %}Fine{% elif req.available_copies_count <= 0 %}0 Stock{% elif (req.borrower_overdue_loans or 0) > 0 %}Overdue{% else %}Quota Full{% endif %}
+                                    </button>
+                                {% else %}
+                                    <!-- Approve & Reserve Copy Button -->
+                                    <form method="POST" action="{{ url_for('loan_requests') }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="request_id" value="{{ req.request_id }}">
+                                        <input type="hidden" name="action" value="approve">
+                                        <button type="submit" class="btn-approve" title="Approve loan request and reserve Copy">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            Approve &amp; Assign Copy
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <!-- Reject Button -->
+                                <form method="POST" action="{{ url_for('loan_requests') }}" style="display: inline;" onsubmit="return confirm('Reject loan request #{{ req.request_id }} for {{ req.borrower_name }}?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <input type="hidden" name="request_id" value="{{ req.request_id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn-reject" title="Reject Request">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary);">All Clear! No Pending Requests</div>
+                            <p style="margin-top: 4px;">Patron loan permission requests will appear here when submitted by Students or Staff.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

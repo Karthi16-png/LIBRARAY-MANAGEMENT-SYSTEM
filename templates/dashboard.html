@@ -1,0 +1,961 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+    /* Welcome Header */
+    .dashboard-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .welcome-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+    }
+    .welcome-sub {
+        font-size: 0.92rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+    .header-actions {
+        display: flex;
+        gap: 12px;
+    }
+    /* Bento Grid Stat Cards */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 20px;
+        margin-bottom: 36px;
+    }
+    .stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--border-hover);
+    }
+    .stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stat-icon svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2;
+        stroke: currentColor;
+        fill: none;
+    }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: var(--text-primary);
+        font-feature-settings: "tnum";
+    }
+    .stat-footnote {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    /* Icon Color Themes */
+    .icon-blue   { background: rgba(59, 130, 246, 0.12); color: #60A5FA; }
+    .icon-emerald{ background: rgba(16, 185, 129, 0.12); color: #34D399; }
+    .icon-amber  { background: rgba(245, 158, 11, 0.12); color: #FBBF24; }
+    .icon-rose   { background: rgba(239, 68, 68, 0.12);  color: #F87171; }
+    .icon-purple { background: rgba(168, 85, 247, 0.12); color: #C084FC; }
+    /* Action Deck */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+        margin-top: 32px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .quick-actions-bar {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+    .action-btn {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        padding: 14px 20px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+        border-color: var(--accent-primary);
+        background: var(--bg-elevated);
+        transform: translateY(-1px);
+    }
+    .action-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--accent-primary);
+        stroke-width: 2;
+        fill: none;
+    }
+    /* Modern Data Card Table */
+    .data-panel {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: 28px;
+    }
+    .panel-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .panel-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .table-container,
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+    }
+    .data-table {
+        width: 100%;
+        min-width: 780px;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.88rem;
+    }
+    .data-table th {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+        padding: 14px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .data-table td {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+    }
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+    .data-table tr:hover td {
+        background: rgba(255, 255, 255, 0.015);
+        color: var(--text-primary);
+    }
+    .book-title-cell {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 48px 20px;
+        color: var(--text-muted);
+    }
+    .empty-state svg {
+        width: 44px;
+        height: 44px;
+        stroke: var(--text-muted);
+        stroke-width: 1.5;
+        fill: none;
+        margin-bottom: 12px;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1 class="welcome-title">Welcome back, {{ session.get('username', 'User') }}</h1>
+        <p class="welcome-sub">
+            Logged in as <strong style="color: var(--accent-primary);">{{ session.get('role') }}</strong>
+        </p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('books') }}" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Browse Catalog
+        </a>
+        {% if session.get('role') in ['Admin', 'Librarian'] %}
+        <a href="{{ url_for('loan_requests') }}" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+            Loan Requests
+        </a>
+        <a href="{{ url_for('issue_loan') }}" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            Issue Book
+        </a>
+        {% endif %}
+    </div>
+</div>
+<!-- ========================================================================= -->
+<!-- 1. ADMIN & LIBRARIAN VIEW -->
+<!-- ========================================================================= -->
+{% if session.get('role') in ['Admin', 'Librarian'] %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Total Titles</span>
+            <div class="stat-icon icon-blue">
+                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ data.total_books or 0 }}</div>
+        <div class="stat-footnote">Unique registered titles in catalog</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Active Loans</span>
+            <div class="stat-icon icon-emerald">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ data.active_loans or data.borrowed_copies or 0 }}</div>
+        <div class="stat-footnote">Physical copies currently checked out</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Overdue Loans</span>
+            <div class="stat-icon icon-rose">
+                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ data.overdue_loans or 0 }}</div>
+        <div class="stat-footnote">Loans exceeding return threshold</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Disciplinary Fines</span>
+            <div class="stat-icon icon-amber">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+        </div>
+        <div class="stat-value">Rs. {{ "%.2f"|format(data.unpaid_fines or 0) }}</div>
+        <div class="stat-footnote">Disciplinary Liabilities</div>
+    </div>
+</div>
+<h2 class="section-title">Quick Administrative Actions</h2>
+<div class="quick-actions-bar">
+    <a href="{{ url_for('add_book') }}" class="action-btn">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Register New Book
+    </a>
+    <a href="{{ url_for('loan_requests') }}" class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+        Loan Requests Queue
+    </a>
+    <a href="{{ url_for('issue_loan') }}" class="action-btn">
+        <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        Issue Physical Copy
+    </a>
+    <a href="{{ url_for('books') }}" class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+        Audit Catalog & Stock
+    </a>
+    {% if session.get('role') == 'Admin' %}
+    <a href="{{ url_for('manage_users') }}" class="action-btn">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Manage Users
+    </a>
+    {% endif %}
+</div>
+<!-- ========================================================================= -->
+<!-- ADMIN & LIBRARIAN OPERATIONAL MONITORS & ACTIONS -->
+<!-- ========================================================================= -->
+{% if session.get('role') in ['Admin', 'Librarian'] %}
+    <!-- Monitor 1: Who and all are currently loaning books (With Return Book Action) -->
+    <h2 class="section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+        Currently Active Book Loans
+    </h2>
+    <div class="data-panel">
+        <div class="panel-header">
+            <span class="panel-title">Active Borrowers Ledger</span>
+            <span class="badge badge-info">{{ data.active_loans_list|length if data.active_loans_list else 0 }} Active Loans</span>
+        </div>
+        <div class="table-container table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Loan Ref</th>
+                        <th>Borrower</th>
+                        <th>Book Title</th>
+                        <th>Copy Ref</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Fine Status</th>
+                        <th style="text-align: right;">Circulation Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data.active_loans_list %}
+                        {% for loan in data.active_loans_list %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">#LN-{{ loan.loan_id }}</td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ loan.borrower_name }}</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                    <span>{{ loan.borrower_email }}</span>
+                                    {% if loan.borrower_role == 'Staff' %}
+                                        <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #C084FC; font-size: 0.65rem; padding: 1px 5px;">Staff</span>
+                                    {% else %}
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #60A5FA; font-size: 0.65rem; padding: 1px 5px;">Student</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="book-title-cell">{{ loan.book_title }}</td>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">Copy #{{ loan.copy_id }}</td>
+                            <td>{{ loan.issue_date.strftime('%b %d, %Y') if loan.issue_date else 'N/A' }}</td>
+                            <td style="font-weight: 600;">{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                            <td>
+                                {% if (loan.fine_amount or 0) > 0 %}
+                                    <span class="badge badge-danger">Rs. {{ "%.2f"|format(loan.fine_amount) }} Unpaid</span>
+                                {% else %}
+                                    <span class="badge badge-success" style="background: rgba(16, 185, 129, 0.12); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">Zero Fine</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <form method="POST" action="{{ url_for('return_book', loan_id=loan.loan_id) }}" style="display: inline;" onsubmit="return confirm('Process return for {{ loan.book_title }} (Copy #{{ loan.copy_id }})?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+                                        Mark Returned
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_loan', loan_id=loan.loan_id) }}" style="display: inline; margin-left: 6px;" onsubmit="return confirm('Delete this active loan for {{ loan.borrower_name }} ({{ loan.book_title }})? This will release Copy #{{ loan.copy_id }} back to Available stock.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        Delete Loan
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('report_lost', loan_id=loan.loan_id) }}" style="display: inline; margin-left: 6px;" onsubmit="return confirm('Report book as LOST for {{ loan.borrower_name }} ({{ loan.book_title }})? This will mark copy as Lost, close the loan, and charge a replacement penalty of Rs. 1500.00.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Mark as Lost
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="empty-state">No books currently loaned out. All items are in inventory.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Monitor 2: Who are overdue (With Fast Return & Penalty Check & Delete Overdue) -->
+    <h2 class="section-title" style="color: var(--danger-text);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger-text)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Overdue Borrowers Watchlist
+    </h2>
+    <div class="data-panel" style="border-color: rgba(239, 68, 68, 0.25);">
+        <div class="panel-header">
+            <span class="panel-title" style="color: var(--danger-text);">Overdue Accounts Requiring Action</span>
+            <span class="badge badge-danger">{{ data.overdue_loans_list|length if data.overdue_loans_list else 0 }} Overdue</span>
+        </div>
+        <div class="table-container table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Loan Ref</th>
+                        <th>Delinquent Borrower</th>
+                        <th>Book Title</th>
+                        <th>Copy Ref</th>
+                        <th>Due Date</th>
+                        <th>Days Overdue</th>
+                        <th style="text-align: right;">Circulation Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data.overdue_loans_list %}
+                        {% for ov in data.overdue_loans_list %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">#LN-{{ ov.loan_id }}</td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ ov.borrower_name }}</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                                    <span>{{ ov.borrower_email }}</span>
+                                    {% if ov.borrower_role == 'Staff' %}
+                                        <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #C084FC; font-size: 0.65rem; padding: 1px 5px;">Staff</span>
+                                    {% else %}
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: #60A5FA; font-size: 0.65rem; padding: 1px 5px;">Student</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="book-title-cell">{{ ov.book_title }}</td>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">Copy #{{ ov.copy_id }}</td>
+                            <td style="color: var(--danger-text); font-weight: 600;">
+                                {{ ov.due_date.strftime('%b %d, %Y') if ov.due_date else 'N/A' }}
+                            </td>
+                            <td>
+                                <span class="badge badge-danger">
+                                    {{ ov.days_overdue or 1 }} Day(s) Overdue
+                                </span>
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <form method="POST" action="{{ url_for('return_book', loan_id=ov.loan_id) }}" style="display: inline;" onsubmit="return confirm('Process return for overdue book {{ ov.book_title }}? Overdue fine will be calculated.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>
+                                        Receive Overdue
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_loan', loan_id=ov.loan_id) }}" style="display: inline; margin-left: 6px;" onsubmit="return confirm('Delete this overdue loan for {{ ov.borrower_name }} ({{ ov.book_title }})? This will delete the active loan for this patron, remove associated fines, and restore Copy #{{ ov.copy_id }} to Available stock.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(220, 38, 38, 0.25); color: #FCA5A5; border: 1px solid rgba(220, 38, 38, 0.5); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                        Delete Overdue
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('report_lost', loan_id=ov.loan_id) }}" style="display: inline; margin-left: 6px;" onsubmit="return confirm('Report overdue book as LOST for {{ ov.borrower_name }} ({{ ov.book_title }})? This will mark copy as Lost, close the loan, and charge a replacement penalty of Rs. 1500.00.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn" style="background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        Mark as Lost
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="empty-state">No loans currently overdue. All patrons in good standing!</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Monitor 3: Who didn't pay fine (With Collect & Mark Paid Action) -->
+    <h2 class="section-title" style="color: var(--warning-text);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning-text)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        Disciplinary Fines & Liabilities Ledger
+    </h2>
+    <div class="data-panel" style="border-color: rgba(245, 158, 11, 0.25);">
+        <div class="panel-header">
+            <span class="panel-title" style="color: var(--warning-text);">Disciplinary Liabilities</span>
+            <span class="badge badge-warning">{{ data.unpaid_fines_list|length if data.unpaid_fines_list else 0 }} Unpaid Penalties</span>
+        </div>
+        <div class="table-container table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fine Ref</th>
+                        <th>Borrower</th>
+                        <th>Book Title</th>
+                        <th>Originating Loan</th>
+                        <th>Due Date</th>
+                        <th>Disciplinary Fine</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Cashier Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data.unpaid_fines_list %}
+                        {% for fine in data.unpaid_fines_list %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">#FN-{{ fine.fine_id }}</td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ fine.borrower_name }}</div>
+                                <div style="font-size: 0.76rem; color: var(--text-muted);">{{ fine.borrower_email }}</div>
+                            </td>
+                            <td class="book-title-cell">{{ fine.book_title }}</td>
+                            <td style="font-family: var(--font-mono); font-size: 0.8rem;">#LN-{{ fine.loan_id }}</td>
+                            <td>{{ fine.due_date.strftime('%b %d, %Y') if fine.due_date else 'N/A' }}</td>
+                            <td style="font-weight: 700; color: var(--warning-text);">
+                                Rs. {{ "%.2f"|format(fine.fine_amount) }}
+                            </td>
+                            <td>
+                                <span class="badge badge-warning">Unpaid</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: inline-flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                                    <form method="POST" action="{{ url_for('pay_fine', fine_id=fine.fine_id) }}" style="display: inline;" onsubmit="return confirm('Confirm payment collection of Rs. {{ fine.fine_amount }} from {{ fine.borrower_name }}?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="payment_action" value="Paid">
+                                        <button type="submit" class="btn" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            Collect & Mark Paid
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('pay_fine', fine_id=fine.fine_id) }}" style="display: inline;" onsubmit="return confirm('Confirm waiving penalty of Rs. {{ fine.fine_amount }} for {{ fine.borrower_name }}?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="payment_action" value="Waived">
+                                        <button type="submit" class="btn" style="background: rgba(99, 102, 241, 0.15); color: #818CF8; border: 1px solid rgba(99, 102, 241, 0.35); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm);">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                            Waive Penalty
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="empty-state">No unpaid fines recorded. All fines are settled.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+<!-- ========================================================================= -->
+<!-- 2. STUDENT VIEW -->
+<!-- ========================================================================= -->
+{% elif session.get('role') == 'Student' %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Committed Books</span>
+            <div class="stat-icon icon-blue">
+                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ data.total_committed or 0 }} / 3</div>
+        <div class="stat-footnote">{{ data.active_loans_count or 0 }} Checked Out &bull; {{ data.awaiting_pickup_count or 0 }} Awaiting Pickup</div>
+    </div>
+    {% if (data.awaiting_pickup_count or 0) > 0 %}
+    <div class="stat-card" style="border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06);">
+        <div class="stat-top">
+            <span class="stat-label" style="color: #60A5FA; font-weight: 700;">Ready for Pickup</span>
+            <div class="stat-icon icon-emerald">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+        </div>
+        <div class="stat-value" style="color: #60A5FA;">{{ data.awaiting_pickup_count }} {{ 'Book' if data.awaiting_pickup_count == 1 else 'Books' }}</div>
+        <div class="stat-footnote" style="color: #93C5FD; font-weight: 600;">Reserved at circulation desk</div>
+    </div>
+    {% endif %}
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Fine</span>
+            <div class="stat-icon icon-amber">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+        </div>
+        {% if (data.total_fines or 0) > 0 %}
+            <div class="stat-value" style="color: var(--danger-text);">Rs. {{ "%.2f"|format(data.total_fines) }}</div>
+            <div class="stat-footnote">
+                <span style="color: var(--danger-text); font-weight: 600;">Clear balance to borrow</span>
+            </div>
+        {% else %}
+            <div class="stat-value" style="font-size: 1.25rem; color: #34D399; font-weight: 800;">Zero Fine</div>
+            <div class="stat-footnote">
+                <span style="color: var(--success-text); font-weight: 600;">Rs. {{ "%.2f"|format(data.total_fines or 0) }}</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<h2 class="section-title">My Active Loans</h2>
+<div class="data-panel">
+    <div class="panel-header">
+        <span class="panel-title">Currently Borrowed Books</span>
+        <span class="badge badge-info">{{ data.active_loans|length if data.active_loans else 0 }} Items</span>
+    </div>
+    <div class="table-container table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Loan Ref</th>
+                    <th>Book Title</th>
+                    <th>Copy ID</th>
+                    <th>Checkout Date</th>
+                    <th>Due Date</th>
+                    <th>Fine Status</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data.active_loans %}
+                    {% for loan in data.active_loans %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size: 0.8rem;">#LN-{{ loan.loan_id }}</td>
+                        <td class="book-title-cell">
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ loan.title }}</div>
+                            {% if loan.prerequisites or loan.next_books %}
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; align-items: center;">
+                                {% if loan.prerequisites %}
+                                    {% for pre in loan.prerequisites %}
+                                    <a href="{{ url_for('category_books', category_id=pre.category_id) if pre.category_id else url_for('books') }}" style="text-decoration: none;" title="Explore prerequisite title in catalog">
+                                        <span class="badge" style="background: rgba(148, 163, 184, 0.12); color: #CBD5E1; border: 1px solid rgba(148, 163, 184, 0.25); font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s ease;">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                            Prerequisite: {{ pre.title }}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+
+                                {% if loan.next_books %}
+                                    {% for nxt in loan.next_books %}
+                                    <a href="{{ url_for('category_books', category_id=nxt.category_id) if nxt.category_id else url_for('books') }}" style="text-decoration: none;" title="Explore downstream recommended title in catalog">
+                                        <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #A5B4FC; border: 1px solid rgba(99, 102, 241, 0.35); font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s ease;">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                            Next to Study: <strong style="color: #E0E7FF;">{{ nxt.title }}</strong>
+                                            {% if nxt.available_copies > 0 %}
+                                                <span style="color: #34D399; font-weight: 700; margin-left: 2px;">● {{ nxt.available_copies }} Avail</span>
+                                            {% else %}
+                                                <span style="color: #F87171; font-weight: 700; margin-left: 2px;">● Out of Stock</span>
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>Copy #{{ loan.copy_id }}</td>
+                        <td>{{ loan.issue_date.strftime('%b %d, %Y') if loan.issue_date else 'N/A' }}</td>
+                        <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                        <td>
+                            {% if (loan.fine_amount or 0) > 0 %}
+                                <span class="badge badge-danger">Rs. {{ "%.2f"|format(loan.fine_amount) }} Unpaid</span>
+                            {% else %}
+                                <span class="badge badge-success" style="background: rgba(16, 185, 129, 0.12); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">Zero Fine</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if loan.is_overdue == 1 %}
+                                <span class="badge badge-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge badge-success">Active Loan</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                                <div>You have no active loans checked out.</div>
+                                <a href="{{ url_for('books') }}" class="btn btn-secondary" style="margin-top: 14px;">Browse Books Catalog</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Student Loan Requests Queue Status -->
+<h2 class="section-title">My Loan Requests</h2>
+<div class="data-panel">
+    <div class="panel-header">
+        <span class="panel-title">Submitted Permission Requests</span>
+        <span class="badge badge-info">{{ data.loan_requests|length if data.loan_requests else 0 }} Requests</span>
+    </div>
+    <div class="table-container table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Request Ref</th>
+                    <th>Book Title</th>
+                    <th>Requested On</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data.loan_requests %}
+                    {% for req in data.loan_requests %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size: 0.8rem;">#REQ-{{ req.request_id }}</td>
+                        <td class="book-title-cell">{{ req.book_title }}</td>
+                        <td>{{ req.request_date.strftime('%b %d, %Y') if req.request_date else 'N/A' }}</td>
+                        <td>
+                            {% if req.status == 'Pending' %}
+                                <span class="badge badge-warning">Awaiting Approval</span>
+                            {% elif req.status == 'Awaiting Pickup' %}
+                                <span class="badge badge-info" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35);">Approved &ndash; Ready for Pickup</span>
+                            {% elif req.status == 'Approved' or req.status == 'Fulfilled' %}
+                                <span class="badge badge-success">Fulfilled</span>
+                            {% elif req.status == 'Rejected' %}
+                                <span class="badge badge-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ req.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'Rejected' and req.book_id %}
+                                <form method="POST" action="{{ url_for('request_loan', book_id=req.book_id) }}" style="display: inline; margin: 0;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <input type="hidden" name="from_dashboard" value="1"/>
+                                    <button type="submit" class="btn btn-sm" style="padding: 4px 10px; font-size: 0.76rem; font-weight: 700; background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35); border-radius: var(--radius-sm); cursor: pointer;" onclick="return confirm('Submit new loan request for \'{{ req.book_title|escape }}\'?');">
+                                        ↻ Request Again
+                                    </button>
+                                </form>
+                            {% elif req.status == 'Awaiting Pickup' %}
+                                <span style="font-size: 0.76rem; color: #60A5FA; font-weight: 600;">{% if req.copy_id %}Copy #{{ req.copy_id }} &bull; {% endif %}Collect at Desk</span>
+                            {% elif req.status == 'Pending' %}
+                                <span style="font-size: 0.76rem; color: var(--text-muted);">In Queue</span>
+                            {% else %}
+                                <span style="font-size: 0.76rem; color: var(--text-muted);">&mdash;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No loan requests submitted. You can request books from the Catalog.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- ========================================================================= -->
+<!-- 3. STAFF VIEW -->
+<!-- ========================================================================= -->
+{% elif session.get('role') == 'Staff' %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Committed Books</span>
+            <div class="stat-icon icon-blue">
+                <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+            </div>
+        </div>
+        <div class="stat-value">{{ data.total_committed or 0 }} / 3</div>
+        <div class="stat-footnote">{{ data.active_loans_count or 0 }} Checked Out &bull; {{ data.awaiting_pickup_count or 0 }} Awaiting Pickup</div>
+    </div>
+    {% if (data.awaiting_pickup_count or 0) > 0 %}
+    <div class="stat-card" style="border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06);">
+        <div class="stat-top">
+            <span class="stat-label" style="color: #60A5FA; font-weight: 700;">Ready for Pickup</span>
+            <div class="stat-icon icon-emerald">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+        </div>
+        <div class="stat-value" style="color: #60A5FA;">{{ data.awaiting_pickup_count }} {{ 'Book' if data.awaiting_pickup_count == 1 else 'Books' }}</div>
+        <div class="stat-footnote" style="color: #93C5FD; font-weight: 600;">Reserved at circulation desk</div>
+    </div>
+    {% endif %}
+    <div class="stat-card">
+        <div class="stat-top">
+            <span class="stat-label">Fine</span>
+            <div class="stat-icon icon-amber">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+        </div>
+        {% if (data.total_fines or 0) > 0 %}
+            <div class="stat-value" style="color: var(--danger-text);">Rs. {{ "%.2f"|format(data.total_fines) }}</div>
+            <div class="stat-footnote">
+                <span style="color: var(--danger-text); font-weight: 600;">Clear balance to borrow</span>
+            </div>
+        {% else %}
+            <div class="stat-value" style="font-size: 1.25rem; color: #34D399; font-weight: 800;">Zero Fine</div>
+            <div class="stat-footnote">
+                <span style="color: var(--success-text); font-weight: 600;">Rs. {{ "%.2f"|format(data.total_fines or 0) }}</span>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<h2 class="section-title">My Checked Out Books</h2>
+<div class="data-panel">
+    <div class="table-container table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Loan #</th>
+                    <th>Book Title</th>
+                    <th>Copy ID</th>
+                    <th>Issued On</th>
+                    <th>Due Date</th>
+                    <th>Fine Status</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data.current_loans %}
+                    {% for loan in data.current_loans %}
+                    <tr>
+                        <td style="font-family: var(--font-mono);">#{{ loan.loan_id }}</td>
+                        <td class="book-title-cell">
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ loan.title }}</div>
+                            {% if loan.prerequisites or loan.next_books %}
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; align-items: center;">
+                                {% if loan.prerequisites %}
+                                    {% for pre in loan.prerequisites %}
+                                    <a href="{{ url_for('category_books', category_id=pre.category_id) if pre.category_id else url_for('books') }}" style="text-decoration: none;" title="Explore prerequisite title in catalog">
+                                        <span class="badge" style="background: rgba(148, 163, 184, 0.12); color: #CBD5E1; border: 1px solid rgba(148, 163, 184, 0.25); font-size: 0.72rem; padding: 2px 7px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s ease;">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                            Prerequisite: {{ pre.title }}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+
+                                {% if loan.next_books %}
+                                    {% for nxt in loan.next_books %}
+                                    <a href="{{ url_for('category_books', category_id=nxt.category_id) if nxt.category_id else url_for('books') }}" style="text-decoration: none;" title="Explore downstream recommended title in catalog">
+                                        <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #A5B4FC; border: 1px solid rgba(99, 102, 241, 0.35); font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: all 0.2s ease;">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                            Next to Study: <strong style="color: #E0E7FF;">{{ nxt.title }}</strong>
+                                            {% if nxt.available_copies > 0 %}
+                                                <span style="color: #34D399; font-weight: 700; margin-left: 2px;">● {{ nxt.available_copies }} Avail</span>
+                                            {% else %}
+                                                <span style="color: #F87171; font-weight: 700; margin-left: 2px;">● Out of Stock</span>
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>Copy #{{ loan.copy_id }}</td>
+                        <td>{{ loan.issue_date.strftime('%b %d, %Y') if loan.issue_date else 'N/A' }}</td>
+                        <td>{{ loan.due_date.strftime('%b %d, %Y') if loan.due_date else 'N/A' }}</td>
+                        <td>
+                            {% if (loan.fine_amount or 0) > 0 %}
+                                <span class="badge badge-danger">Rs. {{ "%.2f"|format(loan.fine_amount) }} Unpaid</span>
+                            {% else %}
+                                <span class="badge badge-success" style="background: rgba(16, 185, 129, 0.12); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">Zero Fine</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if loan.is_overdue == 1 %}
+                                <span class="badge badge-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge badge-success">Active Loan</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="empty-state">No items currently checked out.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Staff Loan Requests Queue Status -->
+<h2 class="section-title">My Loan Requests</h2>
+<div class="data-panel">
+    <div class="panel-header">
+        <span class="panel-title">Submitted Permission Requests</span>
+        <span class="badge badge-info">{{ data.loan_requests|length if data.loan_requests else 0 }} Requests</span>
+    </div>
+    <div class="table-container table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Request Ref</th>
+                    <th>Book Title</th>
+                    <th>Requested On</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if data.loan_requests %}
+                    {% for req in data.loan_requests %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size: 0.8rem;">#REQ-{{ req.request_id }}</td>
+                        <td class="book-title-cell">{{ req.book_title }}</td>
+                        <td>{{ req.request_date.strftime('%b %d, %Y') if req.request_date else 'N/A' }}</td>
+                        <td>
+                            {% if req.status == 'Pending' %}
+                                <span class="badge badge-warning">Awaiting Approval</span>
+                            {% elif req.status == 'Awaiting Pickup' %}
+                                <span class="badge badge-info" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35);">Approved &ndash; Ready for Pickup</span>
+                            {% elif req.status == 'Approved' or req.status == 'Fulfilled' %}
+                                <span class="badge badge-success">Fulfilled</span>
+                            {% elif req.status == 'Rejected' %}
+                                <span class="badge badge-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ req.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'Rejected' and req.book_id %}
+                                <form method="POST" action="{{ url_for('request_loan', book_id=req.book_id) }}" style="display: inline; margin: 0;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <input type="hidden" name="from_dashboard" value="1"/>
+                                    <button type="submit" class="btn btn-sm" style="padding: 4px 10px; font-size: 0.76rem; font-weight: 700; background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35); border-radius: var(--radius-sm); cursor: pointer;" onclick="return confirm('Submit new loan request for \'{{ req.book_title|escape }}\'?');">
+                                        ↻ Request Again
+                                    </button>
+                                </form>
+                            {% elif req.status == 'Awaiting Pickup' %}
+                                <span style="font-size: 0.76rem; color: #60A5FA; font-weight: 600;">{% if req.copy_id %}Copy #{{ req.copy_id }} &bull; {% endif %}Collect at Desk</span>
+                            {% elif req.status == 'Pending' %}
+                                <span style="font-size: 0.76rem; color: var(--text-muted);">In Queue</span>
+                            {% else %}
+                                <span style="font-size: 0.76rem; color: var(--text-muted);">&mdash;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No loan requests submitted. You can request books from the Catalog.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

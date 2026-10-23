@@ -1,0 +1,896 @@
+{% extends "base.html" %}
+
+{% block title %}Academic Learning Roadmaps | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Academic Learning Roadmaps{% endblock %}
+
+{% block extra_css %}
+<style>
+    .roadmap-container {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding-bottom: 35px;
+    }
+
+    /* Executive Header */
+    .roadmap-header-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .roadmap-header-info h1 {
+        font-size: 1.45rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .roadmap-header-info p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+        max-width: 720px;
+        line-height: 1.5;
+    }
+
+    /* Metric Grid */
+    .roadmap-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .roadmap-stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .roadmap-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .roadmap-stat-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .roadmap-stat-val {
+        font-size: 1.65rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+    }
+
+    .roadmap-stat-sub {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+    }
+
+    /* Main Workspace: Vis.js Canvas + Node Inspector Drawer */
+    .roadmap-workspace {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    @media (max-width: 1080px) {
+        .roadmap-workspace {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .roadmap-canvas-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .canvas-toolbar {
+        padding: 14px 20px;
+        background: rgba(17, 24, 39, 0.75);
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .track-pills {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .track-pill-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        padding: 5px 12px;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .track-pill-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+
+    .track-pill-btn.active {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: #FFFFFF;
+        box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .canvas-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tool-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        padding: 5px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.15s ease;
+    }
+
+    .tool-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+
+    #roadmap-canvas {
+        height: 540px;
+        width: 100%;
+        background: radial-gradient(circle at 50% 50%, #111827 0%, #090D16 100%);
+        cursor: grab;
+    }
+
+    #roadmap-canvas:active {
+        cursor: grabbing;
+    }
+
+    .canvas-legend-footer {
+        padding: 12px 20px;
+        background: rgba(17, 24, 39, 0.7);
+        border-top: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .legend-stages {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .stage-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .stage-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    /* Node Inspector Drawer */
+    .node-inspector-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .inspector-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .inspector-header h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .inspector-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .inspector-book-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.35;
+    }
+
+    .stock-badge-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+    }
+
+    .stock-badge-live.avail {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .stock-badge-live.out {
+        background: rgba(239, 68, 68, 0.15);
+        color: #F87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .inspector-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.78rem;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .inspector-meta-label {
+        color: var(--text-muted);
+    }
+
+    .inspector-meta-val {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .relation-section-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-top: 4px;
+        margin-bottom: 6px;
+    }
+
+    .relation-pill-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .relation-pill-item {
+        background: var(--bg-surface-soft);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: var(--radius-sm);
+        padding: 6px 10px;
+        font-size: 0.76rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+
+    .relation-pill-item:hover {
+        border-color: var(--accent-primary);
+        background: rgba(99, 102, 241, 0.1);
+        color: #FFFFFF;
+    }
+
+    /* Sequential Paths Table/Accordion */
+    .paths-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .paths-header h2 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .path-row-item {
+        background: var(--bg-surface-soft);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        transition: border-color 0.2s;
+    }
+
+    .path-row-item:hover {
+        border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .path-nodes-chain {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .chain-book-pill {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-subtle);
+        padding: 4px 10px;
+        border-radius: var(--radius-sm);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .chain-arrow {
+        color: var(--accent-primary);
+        font-weight: 800;
+        font-size: 0.85rem;
+    }
+
+    .chain-depth-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #93C5FD;
+        background: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+    }
+
+    .track-specialization-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 3px 9px;
+        border-radius: var(--radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="roadmap-container">
+    <!-- Executive Top Header -->
+    <div class="roadmap-header-card">
+        <div class="roadmap-header-info">
+            <h1>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#818CF8" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                Academic Learning Roadmaps &amp; Prerequisite Hierarchy
+            </h1>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                {% if session.get('role') in ['Admin', 'Librarian'] %}
+                Structured reading pathways from foundational textbooks to advanced specialized topics with real-time copy availability.
+                {% else %}
+                Structured reading pathways guiding you from foundational textbooks to advanced specialized topics with real-time copy availability.
+                {% endif %}
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('book_bridge') }}" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                Book Bridge
+            </a>
+            <a href="{{ url_for('books') }}" class="btn btn-primary">
+                Browse Full Catalog
+            </a>
+        </div>
+    </div>
+
+    <!-- Live Curriculum KPI Grid -->
+    <div class="roadmap-stats-grid">
+        <div class="roadmap-stat-card">
+            <span class="roadmap-stat-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                Curriculum Volumes
+            </span>
+            <span class="roadmap-stat-val">{{ stats.total_volumes }}</span>
+            <span class="roadmap-stat-sub">Core academic textbooks linked</span>
+        </div>
+        <div class="roadmap-stat-card">
+            <span class="roadmap-stat-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                Real-Time Available
+            </span>
+            <span class="roadmap-stat-val" style="color: #34D399;">{{ stats.available_volumes }} / {{ stats.total_volumes }}</span>
+            <span class="roadmap-stat-sub">Titles with copies on shelf</span>
+        </div>
+        <div class="roadmap-stat-card">
+            <span class="roadmap-stat-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Learning Pathways
+            </span>
+            <span class="roadmap-stat-val" style="color: #818CF8;">{{ stats.total_paths }}</span>
+            <span class="roadmap-stat-sub">Traversable curriculum sequences</span>
+        </div>
+        <div class="roadmap-stat-card">
+            <span class="roadmap-stat-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Max Academic Depth
+            </span>
+            <span class="roadmap-stat-val" style="color: #F59E0B;">{{ stats.max_depth }} Levels</span>
+            <span class="roadmap-stat-sub">Topological hierarchy depth</span>
+        </div>
+    </div>
+
+    <!-- Main Workspace (Interactive Top-to-Bottom Tree Canvas + Node Inspector) -->
+    <div class="roadmap-workspace">
+        <!-- Vis.js Hierarchical Graph Canvas Card -->
+        <div class="roadmap-canvas-card">
+            <div class="canvas-toolbar">
+                <div class="track-pills">
+                    <button class="track-pill-btn active" onclick="filterTrack('all', this)">All Curriculum Tracks</button>
+                    <button class="track-pill-btn" onclick="filterTrack('software_ai', this)">Software &amp; AI</button>
+                    <button class="track-pill-btn" onclick="filterTrack('data', this)">Data &amp; Databases</button>
+                    <button class="track-pill-btn" onclick="filterTrack('systems', this)">Systems &amp; Networks</button>
+                </div>
+                <div class="canvas-actions">
+                    <button class="tool-btn" onclick="fitRoadmapGraph()" title="Recenter and fit roadmap tree">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                        Fit View
+                    </button>
+                    <button class="tool-btn" onclick="toggleLayoutDirection()" id="btn-layout-toggle" title="Toggle between Hierarchical and Free Physics layout">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+                        Hierarchical (UD)
+                    </button>
+                </div>
+            </div>
+
+            <div id="roadmap-canvas"></div>
+
+            <div class="canvas-legend-footer">
+                <div class="legend-stages">
+                    <span class="stage-item"><span class="stage-dot" style="background: #3B82F6;"></span> Level 1 (Foundational)</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #8B5CF6;"></span> Level 2 (Core CS)</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #EC4899;"></span> Level 3 (Specialization)</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #F59E0B;"></span> Level 4 (Advanced Mastery)</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #10B981;"></span> ✓ Mastered</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #38BDF8;"></span> 📖 In Progress</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #34D399;"></span> Available Stock</span>
+                    <span class="stage-item"><span class="stage-dot" style="background: #EF4444;"></span> Out of Stock</span>
+                </div>
+                <div>
+                    <span style="font-family: var(--font-mono); color: var(--text-muted);">Curriculum Graph Engine</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Node Inspector Drawer -->
+        <div class="node-inspector-card" id="node-inspector">
+            <div class="inspector-header">
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Textbook Detail &amp; Prerequisites
+                </h3>
+            </div>
+
+            <div class="inspector-body" id="inspector-content">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 30px 10px;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px; opacity: 0.6;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                    <p>Click any node in the roadmap canvas to inspect its prerequisites, unlocked volumes, and physical stock availability.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discovered Learning Pathways Sequential List -->
+    <div class="paths-card">
+        <div class="paths-header">
+            <h2>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Traversable Academic Learning Sequences (Variable-Length Paths)
+            </h2>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for p in paths %}
+            <div class="path-row-item">
+                <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="track-specialization-badge" style="background: rgba(255, 255, 255, 0.04); color: {{ p.track_color or '#818CF8' }}; border: 1px solid {{ p.track_color or '#818CF8' }}55;">
+                            {{ p.track_badge or 'Academic Track' }}
+                        </span>
+                        <span class="chain-depth-badge">{{ p.depth }} Hop{{ 's' if p.depth > 1 else '' }} Progression</span>
+                    </div>
+                    <div class="path-nodes-chain">
+                        {% for n in p.nodes_in_path %}
+                            <span class="chain-book-pill" onclick="focusBookNode({{ n.id }})" style="cursor: pointer;" title="Click to highlight on graph">{{ n.title }}</span>
+                            {% if not loop.last %}
+                                <span class="chain-arrow">&rarr;</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Vis.js Network Script -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+    const rawNodes = {{ vis_nodes|tojson }};
+    const rawEdges = {{ vis_edges|tojson }};
+    const bookNodesMap = {};
+    rawNodes.forEach(n => {
+        bookNodesMap[n.id] = n.properties;
+    });
+
+    let network = null;
+    let isHierarchical = true;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initRoadmapNetwork(rawNodes, rawEdges);
+        // Default select the first foundational book (Clean Code or DB Concepts)
+        const rootNode = rawNodes.find(n => n.level === 1);
+        if (rootNode) {
+            inspectNode(rootNode.id);
+        }
+    });
+
+    function initRoadmapNetwork(nodesList, edgesList) {
+        const container = document.getElementById("roadmap-canvas");
+        if (!container) return;
+
+        // Safely destroy existing network instance to avoid memory leak and stale canvases
+        if (network) {
+            network.destroy();
+            network = null;
+        }
+
+        const data = {
+            nodes: new vis.DataSet(nodesList),
+            edges: new vis.DataSet(edgesList)
+        };
+
+        const options = {
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    direction: "UD", // Top-to-Bottom
+                    sortMethod: "directed",
+                    levelSeparation: 130,
+                    nodeSpacing: 220,
+                    treeSpacing: 240
+                }
+            },
+            physics: {
+                hierarchicalRepulsion: {
+                    nodeDistance: 220
+                }
+            },
+            nodes: {
+                font: {
+                    size: 15,
+                    face: "Inter, sans-serif",
+                    color: "#F8FAFC"
+                }
+            },
+            interaction: {
+                hover: true,
+                navigationButtons: false,
+                keyboard: false,
+                zoomView: true,
+                dragView: true
+            }
+        };
+
+        network = new vis.Network(container, data, options);
+
+        network.once("afterDrawing", function() {
+            network.fit({
+                padding: 40,
+                animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+            });
+        });
+
+        network.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                const selectedId = params.nodes[0];
+                inspectNode(selectedId);
+            }
+        });
+    }
+
+    // Responsive auto-fit on window resize
+    window.addEventListener("resize", function() {
+        if (network) {
+            network.fit({ padding: 40 });
+        }
+    });
+
+    function fitRoadmapGraph() {
+        if (network) {
+            network.fit({
+                padding: 40,
+                animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+            });
+        }
+    }
+
+    function toggleLayoutDirection() {
+        if (!network) return;
+        isHierarchical = !isHierarchical;
+        const btn = document.getElementById("btn-layout-toggle");
+
+        if (isHierarchical) {
+            network.setOptions({
+                layout: {
+                    hierarchical: {
+                        enabled: true,
+                        direction: "UD",
+                        sortMethod: "directed",
+                        levelSeparation: 130,
+                        nodeSpacing: 220
+                    }
+                }
+            });
+            btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg> Hierarchical (UD)`;
+        } else {
+            network.setOptions({
+                layout: {
+                    hierarchical: { enabled: false }
+                },
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -70,
+                        centralGravity: 0.015,
+                        springLength: 160
+                    }
+                }
+            });
+            btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Free Graph`;
+        }
+        setTimeout(fitRoadmapGraph, 300);
+    }
+
+    function filterTrack(trackKey, btnElement) {
+        document.querySelectorAll(".track-pill-btn").forEach(b => b.classList.remove("active"));
+        if (btnElement) btnElement.classList.add("active");
+
+        if (trackKey === "all") {
+            initRoadmapNetwork(rawNodes, rawEdges);
+            const rootNode = rawNodes.find(n => n.level === 1);
+            if (rootNode) inspectNode(rootNode.id);
+            return;
+        }
+
+        // Filter edges matching track key
+        const matchingEdges = rawEdges.filter(e => {
+            const tr = (e.properties && e.properties.track ? e.properties.track : "").toLowerCase();
+            if (trackKey === "software_ai") {
+                return tr.includes("software") || tr.includes("intelligence") || tr.includes("theoretical");
+            } else if (trackKey === "data") {
+                return tr.includes("data");
+            } else if (trackKey === "systems") {
+                return tr.includes("systems") || tr.includes("infrastructure");
+            }
+            return tr.includes(trackKey.toLowerCase());
+        });
+
+        // Collect matching nodes
+        const activeNodeIds = new Set();
+        matchingEdges.forEach(e => {
+            activeNodeIds.add(e.from);
+            activeNodeIds.add(e.to);
+        });
+
+        const filteredNodes = rawNodes.filter(n => activeNodeIds.has(n.id));
+        initRoadmapNetwork(filteredNodes, matchingEdges);
+
+        // Select the earliest level node of this track for inspector
+        if (filteredNodes.length > 0) {
+            const sortedNodes = [...filteredNodes].sort((a, b) => a.level - b.level);
+            inspectNode(sortedNodes[0].id);
+        }
+        setTimeout(fitRoadmapGraph, 250);
+    }
+
+    function focusBookNode(bookId) {
+        if (!network) return;
+        network.selectNodes([bookId]);
+        network.focus(bookId, {
+            scale: 1.15,
+            animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+        });
+        inspectNode(bookId);
+    }
+
+    function inspectNode(bookId) {
+        const book = bookNodesMap[bookId];
+        const container = document.getElementById("inspector-content");
+        if (!book || !container) return;
+
+        const isAvail = book.is_available;
+        const stockClass = isAvail ? 'avail' : 'out';
+        const stockText = isAvail 
+            ? `✓ ${book.available_copies} of ${book.total_copies} Copies Available`
+            : `✗ Out of Stock (${book.total_copies} Checked Out)`;
+
+        let userStatusHtml = '';
+        if (book.user_status === 'completed') {
+            userStatusHtml = `
+                <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 8px 12px; display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span style="font-size: 0.78rem; font-weight: 700; color: #34D399;">You have read &amp; mastered this volume</span>
+                </div>
+            `;
+        } else if (book.user_status === 'reading') {
+            userStatusHtml = `
+                <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: var(--radius-sm); padding: 8px 12px; display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                    <span style="font-size: 0.78rem; font-weight: 700; color: #38BDF8;">Currently checked out on active loan to you</span>
+                </div>
+            `;
+        }
+
+        let prereqsHtml = '<div style="color: var(--text-muted); font-size: 0.75rem;">None (Foundational Entry Point)</div>';
+        if (book.prereqs && book.prereqs.length > 0) {
+            prereqsHtml = book.prereqs.map(pid => {
+                const pBook = bookNodesMap[pid];
+                const pTitle = pBook ? pBook.title : `Book #${pid}`;
+                const pCompleted = pBook && pBook.user_status === 'completed';
+                const doneBadge = pCompleted 
+                    ? '<span style="font-size: 0.68rem; font-weight: 700; color: #34D399; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 6px; border-radius: 4px;">✓ Mastered</span>'
+                    : '<span style="font-size: 0.68rem; color: var(--text-muted);">Prerequisite</span>';
+                return `
+                    <div class="relation-pill-item" onclick="focusBookNode(${pid})" title="Focus on prerequisite">
+                        <span style="font-weight: 600;">${escapeHtml(pTitle)}</span>
+                        ${doneBadge}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        let unlocksHtml = '<div style="color: var(--text-muted); font-size: 0.75rem;">Terminal Advanced Topic</div>';
+        if (book.unlocks && book.unlocks.length > 0) {
+            unlocksHtml = book.unlocks.map(uid => {
+                const uBook = bookNodesMap[uid];
+                const uTitle = uBook ? uBook.title : `Book #${uid}`;
+                return `
+                    <div class="relation-pill-item" onclick="focusBookNode(${uid})" title="Focus on unlocked topic">
+                        <span style="font-weight: 600;">${escapeHtml(uTitle)}</span>
+                        <span style="font-size: 0.68rem; color: #818CF8;">Next &rarr;</span>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        const targetUrl = book.category_id 
+            ? `/category/${book.category_id}?q=${encodeURIComponent(book.isbn)}`
+            : `{{ url_for('books') }}`;
+
+        container.innerHTML = `
+            <div>
+                <span class="stock-badge-live ${stockClass}">${stockText}</span>
+                ${userStatusHtml}
+                <h4 class="inspector-book-title" style="margin-top: 10px;">${escapeHtml(book.title)}</h4>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">by ${escapeHtml(book.authors || 'Unknown')}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 6px;">
+                <div class="inspector-meta-row">
+                    <span class="inspector-meta-label">Curriculum Level:</span>
+                    <span class="inspector-meta-val" style="color: #93C5FD;">${escapeHtml(book.stage_title)}</span>
+                </div>
+                <div class="inspector-meta-row">
+                    <span class="inspector-meta-label">Subject Category:</span>
+                    <span class="inspector-meta-val">${escapeHtml(book.category_name)}</span>
+                </div>
+                <div class="inspector-meta-row">
+                    <span class="inspector-meta-label">ISBN:</span>
+                    <span class="inspector-meta-val" style="font-family: var(--font-mono); font-size: 0.74rem;">${escapeHtml(book.isbn)}</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="relation-section-title">Requires Prerequisite Knowledge:</div>
+                <div class="relation-pill-list">${prereqsHtml}</div>
+            </div>
+
+            <div>
+                <div class="relation-section-title">Unlocks Subsequent Topics:</div>
+                <div class="relation-pill-list">${unlocksHtml}</div>
+            </div>
+
+            <div style="padding-top: 10px;">
+                <a href="${targetUrl}" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+                    View in Category / Borrow
+                </a>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}

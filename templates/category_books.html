@@ -1,0 +1,1013 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} Books | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}
+    <a href="{{ url_for('books') }}" style="color: var(--text-muted); text-decoration: none;">Catalog</a>
+    <span style="margin: 0 6px; color: var(--border-subtle);">/</span>
+    <span style="color: var(--text-primary);">{{ category.name }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hidden {
+        display: none !important;
+    }
+
+    /* Back Link & Header */
+    .category-page-header {
+        margin-bottom: 24px;
+    }
+
+    .back-nav-bar {
+        margin-bottom: 14px;
+    }
+
+    .back-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+    }
+
+    .back-nav-btn:hover {
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
+        background: rgba(59, 130, 246, 0.08);
+        transform: translateX(-2px);
+    }
+
+    .cat-banner {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cat-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, var(--accent-primary), #818CF8);
+    }
+
+    .cat-banner-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .cat-banner-badges {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .cat-code-pill {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #93C5FD;
+        background: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        padding: 3px 10px;
+        border-radius: var(--radius-sm);
+    }
+
+    .cat-total-pill {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border-subtle);
+        padding: 3px 10px;
+        border-radius: var(--radius-full);
+    }
+
+    .cat-banner-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+        margin: 4px 0 0 0;
+    }
+
+    /* Clean Book Search Toolbar (No Filters) */
+    .search-toolbar {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 16px 20px;
+        margin: 24px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .search-input-wrapper svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        stroke: var(--text-muted);
+        fill: none;
+        stroke-width: 2;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 11px 40px 11px 44px;
+        background: var(--bg-surface-soft);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.92rem;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+        background: rgba(30, 41, 59, 0.7);
+    }
+
+    .btn-clear-search {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 4px;
+    }
+
+    .btn-clear-search:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .results-counter {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .results-counter strong {
+        color: var(--accent-primary);
+    }
+
+    /* Books Grid */
+    .books-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .book-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+
+    .book-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+
+    .book-meta-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+
+    .badge-stock-avail {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+    }
+
+    .badge-stock-out {
+        background: rgba(239, 68, 68, 0.15);
+        color: #F87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: var(--radius-full);
+    }
+
+    .book-title {
+        font-size: 1.12rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+        margin-bottom: 8px;
+    }
+
+    .book-authors {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.84rem;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+    }
+
+    .book-authors svg {
+        width: 14px;
+        height: 14px;
+        stroke: var(--text-muted);
+        fill: none;
+        flex-shrink: 0;
+    }
+
+    /* Frequently Borrowed Together Graph Pill */
+    .frequently-paired-badge {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.12));
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        color: #C4B5FD;
+        padding: 6px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        margin-bottom: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .frequently-paired-badge svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #A78BFA;
+    }
+
+    .frequently-paired-text {
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        flex: 1;
+    }
+
+    .frequently-paired-badge strong {
+        color: #F8FAFC;
+        font-weight: 600;
+    }
+
+    .frequently-paired-count {
+        color: #A78BFA;
+        font-size: 0.7rem;
+        font-weight: 700;
+        white-space: nowrap;
+        background: rgba(139, 92, 246, 0.2);
+        padding: 2px 6px;
+        border-radius: var(--radius-sm);
+        margin-left: 4px;
+        flex-shrink: 0;
+        align-self: flex-start;
+        margin-top: 1px;
+    }
+
+    /* Prerequisite & Next-Step Graph Utility Badges */
+    .prereq-paired-badge {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.08));
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        color: #FCD34D;
+        padding: 6px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .prereq-paired-badge svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #F59E0B;
+    }
+
+    .next-step-paired-badge {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(129, 140, 248, 0.08));
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        color: #C7D2FE;
+        padding: 6px 10px;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .next-step-paired-badge svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #818CF8;
+    }
+
+    .book-details-list {
+        background: var(--bg-surface-soft);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .book-detail-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.78rem;
+    }
+
+    .book-detail-row span {
+        color: var(--text-muted);
+    }
+
+    .book-detail-row strong {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    /* Admin Inventory Adjuster with Numerical Quantity Input */
+    .inventory-adjust-box {
+        background: rgba(59, 130, 246, 0.06);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        margin-top: 10px;
+    }
+
+    .inventory-adjust-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .inventory-adjust-label {
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #93C5FD;
+    }
+
+    .inventory-current-stock {
+        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+    }
+
+    .inventory-type-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qty-stepper-wrapper {
+        display: inline-flex;
+        align-items: center;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .btn-stepper-step {
+        background: rgba(255, 255, 255, 0.04);
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        font-weight: 700;
+        width: 28px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+    }
+
+    .btn-stepper-step:hover {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--accent-primary);
+    }
+
+    .btn-stepper-step:active {
+        background: rgba(59, 130, 246, 0.35);
+    }
+
+    .qty-type-input {
+        width: 48px;
+        height: 32px;
+        padding: 4px;
+        background: transparent;
+        border: none;
+        border-left: 1px solid var(--border-subtle);
+        border-right: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-align: center;
+        transition: all 0.2s ease;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+
+    .qty-type-input::-webkit-outer-spin-button,
+    .qty-type-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .qty-type-input:focus {
+        outline: none;
+        background: rgba(59, 130, 246, 0.08);
+    }
+
+    .btn-qty-action {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 10px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-qty-decrease {
+        background: rgba(239, 68, 68, 0.12);
+        color: #F87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-qty-decrease:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.25);
+        border-color: #EF4444;
+        color: #FFFFFF;
+    }
+
+    .btn-qty-increase {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60A5FA;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    .btn-qty-increase:hover {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: var(--accent-primary);
+        color: #FFFFFF;
+    }
+
+    /* Patron Request Action */
+    .patron-action-box {
+        margin-top: 14px;
+    }
+
+    .btn-request-loan {
+        width: 100%;
+        padding: 8px 12px;
+        background: rgba(59, 130, 246, 0.15);
+        color: #60A5FA;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: var(--radius-md);
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-request-loan:hover {
+        background: var(--accent-primary);
+        color: #FFFFFF;
+        border-color: transparent;
+    }
+
+    /* Empty states */
+    .empty-state-panel {
+        grid-column: 1 / -1;
+        background: var(--bg-surface);
+        border: 1px dashed var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 48px 24px;
+        text-align: center;
+    }
+
+    .empty-state-icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 16px auto;
+        border-radius: var(--radius-full);
+        background: rgba(59, 130, 246, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-primary);
+    }
+
+    .empty-state-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
+    .empty-state-sub {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        max-width: 440px;
+        margin: 0 auto 18px auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back to All Categories Navigation -->
+<div class="back-nav-bar">
+    <a href="{{ url_for('books') }}" class="back-nav-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to All Categories
+    </a>
+</div>
+
+<!-- Category Banner -->
+<div class="cat-banner">
+    <div class="cat-banner-info">
+        <div class="cat-banner-badges">
+            <span class="cat-code-pill">{{ category.section_code or 'SEC' }}</span>
+            {% set cat_count = category.total_books if category.total_books is defined else books|length %}
+            <span class="cat-total-pill" id="totalBooksInCatBadge">{{ cat_count }} Title{% if cat_count != 1 %}s{% endif %} in Category</span>
+        </div>
+        <h1 class="cat-banner-title">{{ category.name }}</h1>
+    </div>
+
+    {% if session.get('role') in ['Admin', 'Librarian'] or session.get('Role') in ['Admin', 'Librarian'] %}
+    <div>
+        <a href="{{ url_for('add_book') }}" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Register New Book
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if user_borrowing_blocked %}
+<div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-md); padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <div>
+        <strong style="color: #F87171; font-size: 0.92rem;">Borrowing Blocked:</strong>
+        <span style="color: var(--text-secondary); margin-left: 6px; font-size: 0.88rem;">{{ block_reason }}</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Clean Book Search Toolbar (Standard GET Form) -->
+<form method="GET" action="{{ url_for('category_books', category_id=category.category_id) }}" class="search-toolbar">
+    <div class="search-input-wrapper">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input 
+            type="text" 
+            name="q" 
+            id="bookSearchInput" 
+            class="search-input"
+            placeholder="Search books in {{ category.name }} by title, author, or ISBN..." 
+            value="{{ q or '' }}"
+            autocomplete="off"
+        >
+        {% if q %}
+        <a href="{{ url_for('category_books', category_id=category.category_id) }}" class="btn-clear-search" title="Clear search" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">✕</a>
+        {% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary" style="padding: 10px 18px; border-radius: var(--radius-sm); font-size: 0.88rem;">Search</button>
+    <div class="results-counter">
+        Showing <strong id="visibleBookCount">{{ books|length }}</strong> Books
+    </div>
+</form>
+
+<!-- Books Directory Grid -->
+<div class="books-grid" id="booksGrid">
+    {% if books %}
+        {% for book in books %}
+        <div 
+            class="book-card" 
+            id="bookCard_{{ book.book_id }}"
+            data-book-id="{{ book.book_id }}"
+            data-title="{{ book.title|lower }}" 
+            data-author="{{ (book.authors or '')|lower }}" 
+            data-isbn="{{ book.isbn|lower }}"
+            data-publisher="{{ (book.publisher_name or '')|lower }}"
+            data-year="{{ book.publication_year or '' }}"
+        >
+            <div>
+                <!-- Card Header: Category & Stock Status -->
+                <div class="book-meta-top">
+                    <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-primary); text-transform: uppercase;">
+                        {{ category.name }}
+                    </span>
+                    {% if (book.available_copies or 0) > 0 %}
+                        <span class="badge-stock-avail">{{ book.available_copies }} Available</span>
+                    {% else %}
+                        <span class="badge-stock-out">Out of Stock</span>
+                    {% endif %}
+                </div>
+
+                <!-- Book Title & Authors -->
+                <h3 class="book-title">{{ book.title }}</h3>
+                <div class="book-authors">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>{{ book.authors or 'Author Unspecified' }}</span>
+                </div>
+
+                {% if book.companion %}
+                <!-- Frequently Borrowed Together Graph Intelligence Pill -->
+                <div class="frequently-paired-badge" title="Co-Borrowing Graph Traversal: Frequently borrowed together by {{ book.companion.count }} common patrons">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span class="frequently-paired-text">
+                        Frequently Paired With: <strong>{{ book.companion.title }}</strong>
+                    </span>
+                    <span class="frequently-paired-count">{{ book.companion.count }}&times;</span>
+                </div>
+                {% endif %}
+
+                {% if book.prerequisites %}
+                <!-- Prerequisite Requirement Badges -->
+                {% for pre in book.prerequisites %}
+                <div class="prereq-paired-badge" title="Academic Hierarchy: Prerequisite textbook recommended before studying this material">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    <span class="frequently-paired-text">
+                        Requires: <strong>{{ pre.title }}</strong>
+                    </span>
+                    {% if pre.completed %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.25); color: #34D399; font-size: 0.65rem; padding: 1px 6px; border-radius: var(--radius-full); white-space: nowrap; flex-shrink: 0; align-self: flex-start; margin-top: 1px;">✓ Completed</span>
+                    {% else %}
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.25); color: #FDE047; font-size: 0.65rem; padding: 1px 6px; border-radius: var(--radius-full); white-space: nowrap; flex-shrink: 0; align-self: flex-start; margin-top: 1px;">Prereq</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                {% if book.next_books %}
+                <!-- Next Step Advancement Badges -->
+                {% for nxt in book.next_books %}
+                <div class="next-step-paired-badge" title="Academic Hierarchy: Next advanced textbook unlocked upon completing this book">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <span class="frequently-paired-text">
+                        Unlocks: <strong>{{ nxt.title }}</strong>
+                    </span>
+                    <span class="badge" style="background: rgba(99, 102, 241, 0.25); color: #E0E7FF; font-size: 0.65rem; padding: 1px 6px; border-radius: var(--radius-full); white-space: nowrap; flex-shrink: 0; align-self: flex-start; margin-top: 1px;">Next Step</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div>
+                <!-- Metadata Attributes -->
+                <div class="book-details-list">
+                    <div class="book-detail-row">
+                        <span>ISBN:</span>
+                        <strong style="font-family: var(--font-mono); font-size: 0.76rem;">{{ book.isbn }}</strong>
+                    </div>
+                    <div class="book-detail-row">
+                        <span>Publisher:</span>
+                        <strong>{{ book.publisher_name or 'N/A' }}</strong>
+                    </div>
+                    <div class="book-detail-row">
+                        <span>Publication Year:</span>
+                        <strong>{{ book.publication_year or 'Unknown' }}</strong>
+                    </div>
+                    <div class="book-detail-row">
+                        <span>Available / Total Copies:</span>
+                        <strong>{{ book.available_copies or 0 }} / {{ book.total_copies or 0 }}</strong>
+                    </div>
+                </div>
+
+                <!-- Admin & Librarian Edit Metadata Action -->
+                {% if session.get('role') in ['Admin', 'Librarian'] or session.get('Role') in ['Admin', 'Librarian'] %}
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <a href="{{ url_for('edit_book', book_id=book.book_id) }}" class="btn" style="width: 100%; background: rgba(99, 102, 241, 0.12); color: #818CF8; border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm); text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        Edit Metadata
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Admin & Librarian Physical Copy Inventory Adjuster with Numerical Quantity Input -->
+                {% if session.get('role') in ['Admin', 'Librarian'] or session.get('Role') in ['Admin', 'Librarian'] %}
+                <div class="inventory-adjust-box">
+                    <div class="inventory-adjust-top">
+                        <span class="inventory-adjust-label">Modify Copies:</span>
+                        <span class="inventory-current-stock">{{ book.available_copies or 0 }} avail / {{ book.total_copies or 0 }} total</span>
+                    </div>
+                    <form method="POST" action="{{ url_for('adjust_inventory', book_id=book.book_id) }}" class="adjust-inventory-form" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="category_id" value="{{ category.category_id }}">
+                        <div class="inventory-type-controls">
+                            <div class="qty-stepper-wrapper">
+                                <button type="button" class="btn-stepper-step" onclick="stepQty(this, -1)" title="Decrease quantity by 1 (Mouse)">−</button>
+                                <input 
+                                    type="number" 
+                                    name="quantity" 
+                                    class="qty-type-input" 
+                                    value="1" 
+                                    min="1"
+                                    max="100"
+                                    step="1"
+                                    placeholder="Qty" 
+                                    inputmode="numeric" 
+                                    pattern="[0-9]+"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value === '' || parseInt(this.value) < 1) this.value = '1'; if(parseInt(this.value) > 100) this.value = '100';" 
+                                    onkeydown="handleQtyKey(event, this)"
+                                    title="Enter number of books (Type with keyboard or click +/- with mouse)"
+                                    required
+                                >
+                                <button type="button" class="btn-stepper-step" onclick="stepQty(this, 1)" title="Increase quantity by 1 (Mouse)">+</button>
+                            </div>
+                            <button 
+                                type="submit" 
+                                name="action" 
+                                value="decrease" 
+                                class="btn-qty-action btn-qty-decrease" 
+                                title="Decrease stock by entered quantity (Mouse or Keyboard)"
+                                {% if (book.available_copies or 0) <= 0 %}disabled style="opacity: 0.35; cursor: not-allowed;"{% endif %}
+                                onclick="return confirm('Decrease physical copies for \'{{ book.title|escape }}\' by ' + this.form.quantity.value + ' item(s)?');"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                - Decrease
+                            </button>
+                            <button 
+                                type="submit" 
+                                name="action" 
+                                value="increase" 
+                                class="btn-qty-action btn-qty-increase" 
+                                title="Increase stock by entered quantity (Mouse or Keyboard)"
+                                onclick="return confirm('Add ' + this.form.quantity.value + ' new physical copy/copies for \'{{ book.title|escape }}\'?');"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                + Increase
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Admin-Only Delete Book Action -->
+                {% if session.get('role') == 'Admin' or session.get('Role') == 'Admin' %}
+                <div style="margin-top: 10px;">
+                    <form method="POST" action="{{ url_for('delete_book', book_id=book.book_id) }}" onsubmit="return confirm('PERMANENT ACTION: Are you sure you want to completely delete and archive \'{{ book.title|escape }}\' (#{{ book.book_id }}) from the catalog? This will delete all copies and history.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="category_id" value="{{ category.category_id }}">
+                        <button type="submit" class="btn" style="width: 100%; background: rgba(239, 68, 68, 0.12); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; font-size: 0.78rem; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Delete Book
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Student & Staff Borrowing Requests -->
+                {% if session.get('role') in ['Student', 'Staff'] or session.get('Role') in ['Student', 'Staff'] %}
+                <div class="patron-action-box">
+                    {% if user_borrowing_blocked %}
+                        <div style="text-align: center; padding: 7px 10px; background: rgba(239, 68, 68, 0.12); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); font-size: 0.78rem; font-weight: 600;" title="{{ block_reason }}">
+                            ⚠️ Borrowing Blocked
+                        </div>
+                    {% elif book.book_id in user_active_loans %}
+                        <div style="text-align: center; padding: 7px 10px; background: rgba(59, 130, 246, 0.12); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-md); font-size: 0.78rem; font-weight: 600;">
+                            📖 Already Borrowed
+                        </div>
+                    {% elif user_awaiting_pickup and book.book_id in user_awaiting_pickup %}
+                        <div style="text-align: center; padding: 7px; background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.35); border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700;">
+                            ✓ Approved &ndash; Ready for Desk Pickup
+                        </div>
+                    {% elif user_pending_requests and book.book_id in user_pending_requests %}
+                        <div style="text-align: center; padding: 7px; background: rgba(245, 158, 11, 0.12); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700;">
+                            ✓ Request Pending Approval
+                        </div>
+                    {% elif (not user_pending_requests and not user_awaiting_pickup) and book.book_id in user_requests %}
+                        <div style="text-align: center; padding: 7px; background: rgba(245, 158, 11, 0.12); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700;">
+                            ✓ Request Pending Approval
+                        </div>
+                    {% elif (book.available_copies or 0) > 0 %}
+                        <form method="POST" action="{{ url_for('request_loan', book_id=book.book_id) }}" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="hidden" name="category_id" value="{{ category.category_id }}">
+                            <button type="submit" class="btn-request-loan" onclick="return confirm('Submit loan request for \'{{ book.title|escape }}\'?');">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path></svg>
+                                Request Physical Loan
+                            </button>
+                        </form>
+                    {% else %}
+                        <div style="text-align: center; padding: 7px; background: rgba(239, 68, 68, 0.1); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 600;">
+                            Currently Out of Stock
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        {% if q %}
+        <div class="empty-state-panel" id="noBookMatch">
+            <div class="empty-state-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h3 class="empty-state-title">No Books Match Search</h3>
+            <p class="empty-state-sub">We couldn't find any books in this category matching "{{ q }}".</p>
+            <a href="{{ url_for('category_books', category_id=category.category_id) }}" class="btn btn-secondary">Clear Search</a>
+        </div>
+        {% else %}
+        <div class="empty-state-panel">
+            <div class="empty-state-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z"></path></svg>
+            </div>
+            <h3 class="empty-state-title">No Books in this Category</h3>
+            <p class="empty-state-sub">There are currently no book titles registered under {{ category.name }}.</p>
+            <a href="{{ url_for('books') }}" class="btn btn-secondary">Return to All Categories</a>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* Mouse & Keyboard Inventory Quantity Helpers */
+    function stepQty(btn, delta) {
+        const wrapper = btn.closest('.qty-stepper-wrapper');
+        if (!wrapper) return;
+        const input = wrapper.querySelector('.qty-type-input');
+        if (input) {
+            let val = parseInt(input.value, 10);
+            if (isNaN(val) || val < 1) val = 1;
+            val = Math.max(1, Math.min(100, val + delta));
+            input.value = val;
+        }
+    }
+
+    function handleQtyKey(event, input) {
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            let val = parseInt(input.value, 10);
+            if (isNaN(val) || val < 1) val = 1;
+            input.value = Math.min(100, val + 1);
+        } else if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            let val = parseInt(input.value, 10);
+            if (isNaN(val) || val < 1) val = 1;
+            input.value = Math.max(1, val - 1);
+        }
+    }
+
+    /* Instant Client-side Search Filtering for Category Books */
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('bookSearchInput');
+        const booksGrid = document.getElementById('booksGrid');
+        const visibleCounter = document.getElementById('visibleBookCount');
+        if (!searchInput || !booksGrid) return;
+
+        const cards = Array.from(booksGrid.querySelectorAll('.book-card'));
+
+        // Client-side dynamic empty state panel
+        let clientEmpty = document.getElementById('clientNoMatch');
+        if (!clientEmpty) {
+            clientEmpty = document.createElement('div');
+            clientEmpty.id = 'clientNoMatch';
+            clientEmpty.className = 'empty-state-panel';
+            clientEmpty.style.display = 'none';
+            clientEmpty.style.marginTop = '24px';
+            clientEmpty.innerHTML = `
+                <div class="empty-state-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3 class="empty-state-title">No Books Match Search</h3>
+                <p class="empty-state-sub" id="clientEmptyText">No books found matching your search.</p>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('bookSearchInput').value=''; document.getElementById('bookSearchInput').dispatchEvent(new Event('input'));">Clear Search</button>
+            `;
+            booksGrid.parentNode.insertBefore(clientEmpty, booksGrid.nextSibling);
+        }
+
+        function runLiveFilter() {
+            const raw = searchInput.value.trim().toLowerCase();
+            const terms = raw.split(/\s+/).filter(Boolean);
+            let visible = 0;
+
+            cards.forEach(card => {
+                if (terms.length === 0) {
+                    card.style.display = '';
+                    visible++;
+                    return;
+                }
+                const title = card.getAttribute('data-title') || '';
+                const author = card.getAttribute('data-author') || '';
+                const isbn = card.getAttribute('data-isbn') || '';
+                const cleanIsbn = isbn.replace(/[^a-z0-9]/gi, '');
+                const publisher = card.getAttribute('data-publisher') || '';
+                const year = card.getAttribute('data-year') || '';
+                const fullText = `${title} ${author} ${isbn} ${cleanIsbn} ${publisher} ${year}`.toLowerCase();
+
+                const matchesAll = terms.every(term => {
+                    const cleanTerm = term.replace(/[^a-z0-9]/gi, '');
+                    return fullText.includes(term) || (cleanTerm && fullText.includes(cleanTerm));
+                });
+
+                if (matchesAll) {
+                    card.style.display = '';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (visibleCounter) {
+                visibleCounter.textContent = visible;
+            }
+
+            if (clientEmpty) {
+                if (visible === 0 && terms.length > 0) {
+                    clientEmpty.style.display = 'block';
+                    document.getElementById('clientEmptyText').textContent = `No books found in this category matching "${searchInput.value.trim()}".`;
+                } else {
+                    clientEmpty.style.display = 'none';
+                }
+            }
+        }
+
+        searchInput.addEventListener('input', runLiveFilter);
+        searchInput.addEventListener('keyup', runLiveFilter);
+    });
+</script>
+{% endblock %}

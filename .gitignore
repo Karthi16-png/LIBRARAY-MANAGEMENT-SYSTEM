@@ -1,0 +1,28 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Flask Sessions
+flask_session/
+
+# Browser Automation & Chrome Profiles
+scratch/chrome_*/
+scratch/__pycache__/
+scratch/*.log
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Environment Variables
+.env

@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}Book-to-Book Bridge (Shortest Path) | VITCC LIBRARY{% endblock %}
+{% block breadcrumb %}Book-to-Book Bridge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bridge-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-bottom: 30px;
+    }
+
+    /* Header & Control Card */
+    .bridge-header-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .bridge-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .bridge-title-group h1 {
+        font-size: 1.45rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .bridge-title-group p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+        max-width: 680px;
+        line-height: 1.5;
+    }
+
+    /* Search & Selection Form */
+    .bridge-form-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto;
+        align-items: flex-end;
+        gap: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    @media (max-width: 900px) {
+        .bridge-form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .select-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .select-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .select-label.origin { color: #60A5FA; }
+    .select-label.dest   { color: #34D399; }
+
+    .bridge-select {
+        background: rgba(17, 24, 39, 0.8);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        font-family: var(--font-sans);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        width: 100%;
+    }
+
+    .bridge-select:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+
+    .swap-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        width: 44px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 2px;
+    }
+
+    .swap-btn:hover {
+        color: #FFFFFF;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent-primary);
+        transform: rotate(180deg);
+    }
+
+    .btn-find-path {
+        background: linear-gradient(135deg, #2563EB, #1D4ED8);
+        color: #FFFFFF;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        padding: 11px 22px;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+        margin-bottom: 2px;
+        height: 42px;
+    }
+
+    .btn-find-path:hover {
+        background: linear-gradient(135deg, #3B82F6, #2563EB);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
+        transform: translateY(-1px);
+    }
+
+    /* Preset Shortcuts */
+    .presets-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+
+    .preset-pill {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-full);
+        padding: 4px 12px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+    }
+
+    .preset-pill:hover {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #93C5FD;
+    }
+
+    /* Result Metric Banner */
+    .result-banner {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.12));
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        border-radius: var(--radius-lg);
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .result-metric-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .degree-badge {
+        background: #10B981;
+        color: #FFFFFF;
+        font-size: 1.15rem;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .result-text-main {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .result-text-sub {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* Visual Graph Canvas */
+    .bridge-canvas-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .canvas-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(17, 24, 39, 0.6);
+    }
+
+    .canvas-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #bridge-network-canvas {
+        height: 480px;
+        width: 100%;
+        background: radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, rgba(11, 15, 25, 0.95) 100%);
+    }
+
+    .canvas-footer {
+        padding: 12px 20px;
+        border-top: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.74rem;
+        color: var(--text-muted);
+        background: rgba(17, 24, 39, 0.6);
+    }
+
+    .legend-list {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .legend-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .legend-tag-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    /* Path Step Breadcrumbs */
+    .steps-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .steps-card h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .steps-timeline {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .step-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        min-width: 190px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        position: relative;
+    }
+
+    .step-item.origin       { border-color: rgba(59, 130, 246, 0.5); background: rgba(59, 130, 246, 0.08); }
+    .step-item.intermediate { border-color: rgba(100, 116, 139, 0.5); background: rgba(100, 116, 139, 0.12); }
+    .step-item.dest         { border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.08); }
+
+    .step-number {
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+    }
+
+    .step-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .step-arrow {
+        color: var(--accent-primary);
+        font-weight: 800;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bridge-container">
+    <!-- Top Header & Selection Card -->
+    <div class="bridge-header-card">
+        <div class="bridge-title-row">
+            <div class="bridge-title-group">
+                <h1>
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#34D399" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    The "Book-to-Book Bridge" Shortest Path Traversal
+                </h1>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                    Discover the direct connection between any two books through shared authors, categories, editions, and circulation history.
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('graph_visualizer') }}" class="btn btn-secondary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    Full Knowledge Graph
+                </a>
+            </div>
+        </div>
+
+        <!-- Form for Book A & Book B -->
+        <form method="GET" action="{{ url_for('book_bridge') }}" id="bridgeForm" class="bridge-form-row">
+            <!-- Book A -->
+            <div class="select-group">
+                <label class="select-label origin" for="bookASelect">
+                    <span>🌟 Origin Book (A)</span>
+                </label>
+                <select name="book_a" id="bookASelect" class="bridge-select" required>
+                    {% for b in all_books %}
+                        <option value="{{ b.book_id }}" {% if b.book_id == book_a_id %}selected{% endif %}>
+                            #{{ b.book_id }}: {{ b.title }} ({{ b.author_name or 'Author' }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Swap Button -->
+            <div>
+                <button type="button" class="swap-btn" title="Swap Origin and Destination" onclick="swapBooks()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                </button>
+            </div>
+
+            <!-- Book B -->
+            <div class="select-group">
+                <label class="select-label dest" for="bookBSelect">
+                    <span>🎯 Destination Book (B)</span>
+                </label>
+                <select name="book_b" id="bookBSelect" class="bridge-select" required>
+                    {% for b in all_books %}
+                        <option value="{{ b.book_id }}" {% if b.book_id == book_b_id %}selected{% endif %}>
+                            #{{ b.book_id }}: {{ b.title }} ({{ b.author_name or 'Author' }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="btn-find-path">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Calculate Bridge
+                </button>
+            </div>
+        </form>
+
+        <!-- Presets Row -->
+        <div class="presets-row">
+            <span>Quick Presets:</span>
+            <a href="{{ url_for('book_bridge', book_a=1, book_b=5) }}" class="preset-pill">Database Category Bridge (2 Hops)</a>
+            <a href="{{ url_for('book_bridge', book_a=2, book_b=4) }}" class="preset-pill">CS & AI Category Bridge (2 Hops)</a>
+            <a href="{{ url_for('book_bridge', book_a=1, book_b=4) }}" class="preset-pill">Cross-Domain Reader Circulation Bridge (6 Hops)</a>
+        </div>
+    </div>
+
+    <!-- Error or Notification -->
+    {% if error_msg %}
+    <div class="alert alert-danger" style="padding: 14px 20px; border-radius: var(--radius-md); font-size: 0.85rem;">
+        <strong>Notice:</strong> {{ error_msg }}
+    </div>
+    {% endif %}
+
+    {% if path_found %}
+    <!-- Degree & Result Banner -->
+    <div class="result-banner">
+        <div class="result-metric-group">
+            <div class="degree-badge">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                {{ degrees }} {% if degrees == 1 %}Degree{% else %}Degrees{% endif %}
+            </div>
+            <div>
+                <div class="result-text-main">
+                    Connected across {{ path_nodes|length }} nodes via {{ degrees }} relationship hops
+                </div>
+            </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.8rem; color: #6EE7B7;">
+            MATCH p = shortestPath((b1:Book)-[:REL*]-(b2:Book))
+        </div>
+    </div>
+
+    <!-- Step Timeline Breadcrumbs -->
+    <div class="steps-card">
+        <h3>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            Sequential Graph Traversal Narrative
+        </h3>
+        <div class="steps-timeline">
+            {% for step in path_steps %}
+                <div class="step-item {% if loop.first %}origin{% elif loop.last %}dest{% elif step.type == 'Intermediate Book' %}intermediate{% endif %}">
+                    <div class="step-number">Node {{ step.step }} &bull; {{ step.type }}</div>
+                    <div class="step-name" title="{{ step.name }}">{{ step.name }}</div>
+                </div>
+                {% if not loop.last %}
+                    <div class="step-arrow">&rarr;</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Interactive Vis.js Visual Network Canvas -->
+    <div class="bridge-canvas-card">
+        <div class="canvas-header">
+            <div class="canvas-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="#38BDF8" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                Interactive Shortest Path Subgraph Visualization
+            </div>
+            <div>
+                <button class="graph-btn-sm" onclick="fitBridgeGraph()" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--text-secondary); padding: 4px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; cursor: pointer;">
+                    Reset View
+                </button>
+            </div>
+        </div>
+
+        <div id="bridge-network-canvas"></div>
+
+        <div class="canvas-footer">
+            <div class="legend-list">
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #2563EB;"></span> ⭐ Origin Book</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #64748B;"></span> 📖 Intermediate Book</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #059669;"></span> 🎯 Destination Book</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #F59E0B;"></span> Category</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #8B5CF6;"></span> Author</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #14B8A6;"></span> Copy</span>
+                <span class="legend-tag"><span class="legend-tag-dot" style="background: #06B6D4;"></span> Loan / Reader</span>
+            </div>
+            <div>
+                <span>Shortest Path Graph Engine</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+</div>
+
+<!-- Vis.js Network Script -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script id="bridge-graph-data" type="application/json">
+{
+    "pathFound": {{ (path_found and path_nodes)|tojson }},
+    "nodes": {{ (path_nodes or [])|tojson }},
+    "edges": {{ (path_edges or [])|tojson }}
+}
+</script>
+<script>
+    function swapBooks() {
+        const selA = document.getElementById("bookASelect");
+        const selB = document.getElementById("bookBSelect");
+        const temp = selA.value;
+        selA.value = selB.value;
+        selB.value = temp;
+    }
+
+    let bridgeNetwork = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const dataEl = document.getElementById("bridge-graph-data");
+        if (dataEl) {
+            try {
+                const payload = JSON.parse(dataEl.textContent);
+                if (payload.pathFound && Array.isArray(payload.nodes) && payload.nodes.length > 0) {
+                    renderBridgeNetwork(payload.nodes, payload.edges || []);
+                }
+            } catch (err) {
+                console.error("Failed to parse bridge graph data:", err);
+            }
+        }
+    });
+
+    function fitBridgeGraph() {
+        if (bridgeNetwork) {
+            bridgeNetwork.fit({ animation: { duration: 600, easingFunction: 'easeInOutQuad' } });
+        }
+    }
+
+    function renderBridgeNetwork(nodesList, edgesList) {
+        const container = document.getElementById("bridge-network-canvas");
+        if (!container) return;
+
+        // Ensure any BELONGS_TO relationship points from Book to Category
+        edgesList.forEach(e => {
+            if (e.label && e.label.includes("BELONGS_TO")) {
+                const fromNode = nodesList.find(n => n.id === e.from);
+                const toNode = nodesList.find(n => n.id === e.to);
+                if (fromNode && toNode) {
+                    const fromIsCat = fromNode.group === "Category" || (fromNode.properties && fromNode.properties.category_id !== undefined);
+                    const toIsBook = ["StartBook", "TargetBook", "IntermediateBook", "Book"].includes(toNode.group) || (toNode.properties && toNode.properties.book_id !== undefined);
+                    if (fromIsCat && toIsBook) {
+                        const tmp = e.from;
+                        e.from = e.to;
+                        e.to = tmp;
+                    }
+                }
+            }
+        });
+
+        const data = {
+            nodes: new vis.DataSet(nodesList),
+            edges: new vis.DataSet(edgesList)
+        };
+
+        const options = {
+            groups: {
+                StartBook: {
+                    color: { background: '#1D4ED8', border: '#60A5FA', highlight: { background: '#2563EB', border: '#93C5FD' } },
+                    shape: 'dot',
+                    size: 28,
+                    font: { color: '#FFFFFF', face: 'Inter, sans-serif', size: 13, bold: true }
+                },
+                IntermediateBook: {
+                    color: { background: '#475569', border: '#64748B', highlight: { background: '#64748B', border: '#94A3B8' } },
+                    shape: 'dot',
+                    size: 24,
+                    font: { color: '#F1F5F9', face: 'Inter, sans-serif', size: 12, bold: true }
+                },
+                Book: {
+                    color: { background: '#475569', border: '#64748B', highlight: { background: '#64748B', border: '#94A3B8' } },
+                    shape: 'dot',
+                    size: 24,
+                    font: { color: '#F1F5F9', face: 'Inter, sans-serif', size: 12, bold: true }
+                },
+                TargetBook: {
+                    color: { background: '#059669', border: '#34D399', highlight: { background: '#10B981', border: '#6EE7B7' } },
+                    shape: 'dot',
+                    size: 28,
+                    font: { color: '#FFFFFF', face: 'Inter, sans-serif', size: 13, bold: true }
+                },
+                Category: {
+                    color: { background: '#D97706', border: '#FBBF24', highlight: { background: '#F59E0B', border: '#FDE68A' } },
+                    shape: 'diamond',
+                    size: 24,
+                    font: { color: '#E5E7EB', face: 'Inter, sans-serif', size: 11 }
+                },
+                Author: {
+                    color: { background: '#7C3AED', border: '#C084FC', highlight: { background: '#8B5CF6', border: '#DDD6FE' } },
+                    shape: 'dot',
+                    size: 22,
+                    font: { color: '#E5E7EB', face: 'Inter, sans-serif', size: 11 }
+                },
+                Copy: {
+                    color: { background: '#0F766E', border: '#2DD4BF', highlight: { background: '#14B8A6', border: '#99F6E4' } },
+                    shape: 'box',
+                    font: { color: '#FFFFFF', face: 'monospace', size: 10 }
+                },
+                Loan: {
+                    color: { background: '#0891B2', border: '#22D3EE', highlight: { background: '#06B6D4', border: '#A5F3FC' } },
+                    shape: 'box',
+                    font: { color: '#FFFFFF', face: 'monospace', size: 10 }
+                },
+                User: {
+                    color: { background: '#4F46E5', border: '#818CF8', highlight: { background: '#6366F1', border: '#C7D2FE' } },
+                    shape: 'dot',
+                    size: 20,
+                    font: { color: '#E5E7EB', face: 'Inter, sans-serif', size: 11 }
+                }
+            },
+            nodes: {
+                borderWidth: 2,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 8, x: 2, y: 3 }
+            },
+            edges: {
+                width: 2.5,
+                color: { color: '#60A5FA', highlight: '#93C5FD', opacity: 0.85 },
+                arrows: { to: { enabled: true, scaleFactor: 0.7 } },
+                smooth: { type: 'curvedCW', roundness: 0.2 },
+                font: { align: 'top', size: 10, color: '#9CA3AF', strokeWidth: 0, background: 'rgba(17, 24, 39, 0.7)' }
+            },
+            physics: {
+                stabilization: { iterations: 120 },
+                barnesHut: {
+                    gravitationalConstant: -3500,
+                    centralGravity: 0.2,
+                    springLength: 130,
+                    springConstant: 0.04
+                }
+            },
+            interaction: {
+                hover: true,
+                navigationButtons: true,
+                keyboard: false
+            }
+        };
+
+        bridgeNetwork = new vis.Network(container, data, options);
+    }
+</script>
+{% endblock %}

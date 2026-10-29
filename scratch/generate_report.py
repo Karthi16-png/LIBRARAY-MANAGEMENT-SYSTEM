@@ -250,9 +250,9 @@ def build_document():
     # Project Title (16pt Times New Roman Bold)
     p_proj = doc.add_paragraph()
     p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_proj.paragraph_format.space_before = Pt(12)
+    p_proj.paragraph_format.space_before = Pt(14)
     p_proj.paragraph_format.space_after = Pt(8)
-    r_proj = p_proj.add_run("Database Management System Project - 2026\n\nTitle: Enterprise Library Management System\nSub-title: Modern Academic Library Management System with Phased Migration from Oracle 21c Relational Database to Neo4j AuraDB Graph Database")
+    r_proj = p_proj.add_run("Database Management System Project - 2026\n\nTitle: Online Library Management System")
     r_proj.font.name = "Times New Roman"
     r_proj.font.size = Pt(16.0)
     r_proj.font.bold = True
@@ -260,11 +260,12 @@ def build_document():
 
     p_subm = doc.add_paragraph()
     p_subm.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_subm.paragraph_format.space_before = Pt(8)
-    p_subm.paragraph_format.space_after = Pt(14)
-    r_subm = p_subm.add_run("A Project Report Submitted in Partial Fulfillment of the Requirements for\nBACSE202 — Database Systems\nSlot: F1+TF1")
+    p_subm.paragraph_format.space_before = Pt(4)
+    p_subm.paragraph_format.space_after = Pt(16)
+    r_subm = p_subm.add_run("BACSE202 — Database Systems\nSlot: F1+TF1")
     r_subm.font.name = "Times New Roman"
     r_subm.font.size = Pt(12.0)
+    r_subm.font.bold = True
     r_subm.font.color.rgb = TEXT_DARK
 
     p_by = doc.add_paragraph()

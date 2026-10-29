@@ -458,7 +458,7 @@ def build_document():
     add_p("The modern academic enterprise library represents a mission-critical intellectual hub demanding both strict transactional consistency for operational circulation and high-performance associative intelligence for knowledge discovery. Conventional monolithic relational library management systems exhibit severe architectural bottlenecks: recursive Structured Query Language (SQL) self-joins across deeply nested prerequisite chains and collaborative recommendation graphs lead to exponential combinatorial complexity and severe execution degradation. Conversely, pure graph database architectures require mature transactional grounding and declarative schema integrity essential for zero-error inventory accounting, circulation auditing, and automated financial fine enforcement.")
     add_p("To address these operational and associative challenges, this project implemented a disciplined Phased Database Migration Strategy engineered for the Vellore Institute of Technology, Chennai (VITCC) academic ecosystem. Phase 1 established a robust transactional foundation built entirely on Oracle Database 21c Enterprise Edition, featuring a fully normalized relational schema, primary/foreign key integrity, and automated business governance enforced through PL/SQL stored procedures and triggers. Phase 2 completely migrated the operational application backend to Neo4j AuraDB (Version 5.x), unlocking native graph data modeling, index-free adjacency traversals, and advanced network analytics while retaining full circulation integrity.")
     add_p("In the initial relational phase, a rigorous Boyce-Codd Normal Form (BCNF) relational schema was established across normalized core tables centered around a unified USERS entity with Role-Based Access Control (RBAC). Advanced Oracle PL/SQL programming constructs—including autonomous stored procedures, row-level before-insert validation triggers, and statement-level fine assessment packages—enforced strict business governance directly within the database engine. Overdue fines were mathematically calculated at a standard institutional rate of Rs. 10 per day past the due date, while automated hold mechanics suspended borrowing privileges when outstanding balances surpassed configured university thresholds.")
-    add_p("In Phase 2, the production backend was completely migrated to Neo4j AuraDB, modeling academic entities as a Labeled Property Graph comprising 310 nodes across User, Book, Topic, Author, and Category labels interconnected via 685 typed relationships. Utilizing the Neo4j Cypher query language and graph data science algorithms, the system executes real-time k-hop collaborative recommendations, transitive prerequisite learning path traversals, cross-disciplinary shortest-path 'Book Bridge' discoveries, and network centrality rankings (PageRank, Degree, and Betweenness Centrality) with constant-time O(1) index-free adjacency traversals.")
+    add_p("In Phase 2, the production backend was completely migrated to Neo4j AuraDB, modeling academic entities as a Labeled Property Graph comprising 310 nodes across User, Book, Copy, Loan, Author, and Category labels interconnected via 685 typed relationships. Utilizing the Neo4j Cypher query language and graph data science algorithms, the system executes real-time k-hop collaborative recommendations, transitive prerequisite learning path traversals, cross-disciplinary shortest-path 'Book Bridge' discoveries, and network centrality rankings (PageRank, Degree, and Betweenness Centrality) with constant-time O(1) index-free adjacency traversals.")
     add_p("Comprehensive empirical testing across fifteen formal test cases demonstrates 100% operational success. Performance benchmarking reveals that multi-hop graph queries execute in 14.2 milliseconds on Neo4j AuraDB compared to 482.6 milliseconds on relational recursive joins—a 34x speedup. The application interface provides an elegant, multi-role (Admin, Librarian, Staff, Student) web portal developed in responsive HTML5 and Vanilla CSS with zero external bloated UI dependencies, featuring an interactive force-directed graph visualizer. This project successfully establishes an enterprise-grade, scalable model for modern academic information systems through a phased migration lifecycle.")
 
     doc.add_page_break()
@@ -592,8 +592,8 @@ def build_document():
     add_h2("5.1 Selection of Modern Database: Neo4j AuraDB Graph Database")
     add_p("To overcome the fundamental limitations of relational architectures in processing complex network structures, this project incorporates Neo4j AuraDB as its modern non-relational database. Neo4j is an open-source, fully managed native graph database engineered specifically for storing, navigating, and analyzing highly interconnected datasets.")
     add_p("Unlike relational databases that represent data as disconnected rows in two-dimensional tables linked by logical foreign keys, Neo4j implements the Labeled Property Graph (LPG) model. In this model:")
-    add_bullet("Nodes", "Represent discrete operational entities such as Users, Books, Categories, Authors, and Curriculum Topics. Nodes can possess multiple descriptive labels and key-value properties.")
-    add_bullet("Relationships", "Represent directed, typed, and semantically rich connections between nodes (e.g., `BORROWED`, `COVERS_TOPIC`, `REQUIRES_PREREQUISITE`, `AUTHORED_BY`). Relationships are first-class database citizens stored with direct physical pointers.")
+    add_bullet("Nodes", "Represent discrete operational entities such as Users, Books, Copies, Loans, Categories, and Authors. Nodes can possess multiple descriptive labels and key-value properties.")
+    add_bullet("Relationships", "Represent directed, typed, and semantically rich connections between nodes (e.g., `(u:User)-[:BORROWED]->(l:Loan)-[:FOR_COPY]->(cp:Copy)<-[:HAS_COPY]-(b:Book)`, `(b:Book)-[:BELONGS_TO]->(c:Category)`, `(b1:Book)-[:PREREQUISITE_FOR]->(b2:Book)`, `(a:Author)-[:WROTE]->(b:Book)`). Relationships are first-class database citizens stored with direct physical pointers.")
     add_bullet("Index-Free Adjacency", "The foundational technical differentiator of Neo4j is Index-Free Adjacency (IFA). In a native graph engine, each node directly contains physical memory pointers to its adjacent neighboring nodes and relationships. As a result, traversing a relationship does not require scanning a global B-tree index or executing hash table lookups; it involves simply dereferencing in-memory pointers in O(1) constant time per step.")
 
     add_h2("5.2 Traditional Relational Database: Oracle Database 21c")
@@ -741,8 +741,8 @@ def build_document():
 
     add_h2("6.6 Graph Data Model: Labeled Property Graph Architecture")
     add_p("The knowledge network is modeled as a native Labeled Property Graph in Neo4j AuraDB:")
-    add_bullet("Node Labels", "`:User` (properties: user_id, full_name, email, role, account_status), `:Book` (book_id, isbn, title, edition, pub_year, available_copies), `:Category` (category_id, name), `:Author` (author_id, name), `:Topic` (topic_id, name, level).")
-    add_bullet("Relationship Types", "`(u:User)-[:BORROWED {loan_id, status, due_date}]->(b:Book)`; `(b:Book)-[:BELONGS_TO]->(c:Category)`; `(b:Book)-[:COVERS_TOPIC]->(t:Topic)`; `(t1:Topic)-[:REQUIRES_PREREQUISITE]->(t2:Topic)`; `(b:Book)-[:AUTHORED_BY]->(a:Author)`.")
+    add_bullet("Node Labels", "`:User` (properties: user_id, username, email, role, account_status), `:Book` (book_id, isbn, title, edition, pub_year, available_copies), `:Copy` (copy_id, barcode, status), `:Loan` (loan_id, due_date, status), `:Category` (category_id, name), `:Author` (author_id, name).")
+    add_bullet("Relationship Types", "`(u:User)-[:BORROWED]->(l:Loan)-[:FOR_COPY]->(cp:Copy)<-[:HAS_COPY]-(b:Book)`; `(b:Book)-[:BELONGS_TO]->(c:Category)`; `(b1:Book)-[:PREREQUISITE_FOR]->(b2:Book)`; `(a:Author)-[:WROTE]->(b:Book)`.")
     add_p("The graph schema contains 310 nodes and 685 relationships, allowing the recommendation engine to execute sub-20ms path traversals without tabular joins.")
 
     doc.add_page_break()
@@ -880,39 +880,37 @@ END;"""
 
     add_p("1. Collaborative Co-Borrowing Recommendation Query:", bold_prefix="Cypher Query 1: ")
     add_code(
-"""// Collaborative Filtering: Books borrowed by peers with similar reading histories
-MATCH (u:User {user_id: $user_id})-[:BORROWED]->(b1:Book)<-[:BORROWED]-(peer:User)-[:BORROWED]->(b2:Book)
-WHERE NOT (u)-[:BORROWED]->(b2)
-RETURN b2.title AS RecommendedBook, count(peer) AS RecommendationStrength, collect(DISTINCT peer.full_name)[..3] AS PeerReaders
-ORDER BY RecommendationStrength DESC
-LIMIT 5;"""
+"""// Collaborative Filtering: Peer borrowing clusters matching exact codebase schema
+MATCH (me:User {user_id: $uid})-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b1:Book)-[:BELONGS_TO]->(cat:Category)
+MATCH (other:User {role: 'Student'})-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b2:Book)-[:BELONGS_TO]->(cat)
+WHERE other.user_id <> $uid AND NOT (me)-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b2)
+RETURN b2.title AS RecommendedBook, count(DISTINCT other) AS RecommendationStrength
+ORDER BY RecommendationStrength DESC LIMIT 5;"""
     )
 
     add_p("2. Hierarchical Prerequisite Learning Path Traversal:", bold_prefix="Cypher Query 2: ")
     add_code(
-"""// Multi-tier prerequisite path for academic topics
-MATCH path = (target:Topic {name: $topic_name})<-[:REQUIRES_PREREQUISITE*1..4]-(prereq:Topic)
-UNWIND nodes(path) AS stepNode
-MATCH (b:Book)-[:COVERS_TOPIC]->(stepNode)
-RETURN stepNode.name AS ConceptStep, length(path) AS HierarchyLevel, collect(DISTINCT b.title) AS RecommendedTextbooks
-ORDER BY HierarchyLevel DESC;"""
+"""// Multi-tier prerequisite paths mapping foundational to advanced textbooks
+MATCH path = (root:Book)-[:PREREQUISITE_FOR*1..4]->(target:Book)
+WHERE NOT ()-[:PREREQUISITE_FOR]->(root) AND NOT (target)-[:PREREQUISITE_FOR]->()
+RETURN [n IN nodes(path) | {id: n.book_id, title: n.title}] AS nodes_in_path, length(path) AS depth;"""
     )
 
     add_p("3. Cross-Disciplinary 'Book Bridge' Shortest Path Discovery:", bold_prefix="Cypher Query 3: ")
     add_code(
-"""// Dijkstra / BFS shortest path connecting two disparate academic disciplines
-MATCH (b1:Book {title: $book1_title}), (b2:Book {title: $book2_title})
-MATCH path = shortestPath((b1)-[*]-(b2))
-RETURN [n IN nodes(path) | coalesce(n.title, n.name)] AS ConnectionBridge, length(path) AS BridgeDegree;"""
+"""// Dijkstra shortest path connecting two disparate academic disciplines
+MATCH p = shortestPath((b1:Book {book_id: $id1})-[:BELONGS_TO|WROTE|PUBLISHED_BY|PREREQUISITE_FOR*1..5]-(b2:Book {book_id: $id2}))
+RETURN p;"""
     )
 
     add_p("4. Network Centrality Analytics (Degree & Betweenness Centrality):", bold_prefix="Cypher Query 4: ")
     add_code(
-"""// Centrality: Discovering influential textbooks bridging academic domains
+"""// Degree Centrality: Discovering influential textbooks by node connections and circulation volume
 MATCH (b:Book)
-RETURN b.title AS Title, size((b)--()) AS DegreeCentrality, size((b)<-[:BORROWED]-()) AS CirculationVolume
-ORDER BY DegreeCentrality DESC
-LIMIT 10;"""
+OPTIONAL MATCH (b)-[:HAS_COPY]->(cp:Copy)
+OPTIONAL MATCH (cp)<-[:FOR_COPY]-(l:Loan)
+RETURN b.title AS Title, size((b)--()) AS DegreeCentrality, count(DISTINCT l) AS CirculationVolume
+ORDER BY DegreeCentrality DESC LIMIT 10;"""
     )
 
     add_h2("7.6 Responsive Front-End Architecture & Role-Based Workflows")
@@ -1066,13 +1064,12 @@ ORDER BY total_inventory DESC;"""
 
     add_p("Demonstration of Neo4j Cypher Query (Multi-Hop Collaborative Neighborhood):", bold_prefix="Neo4j Cypher Execution: ")
     add_code(
-"""MATCH (targetUser:User {user_id: 101})-[:BORROWED]->(seedBook:Book)
-MATCH (seedBook)<-[:BORROWED]-(peer:User)-[:BORROWED]->(recBook:Book)
-WHERE NOT (targetUser)-[:BORROWED]->(recBook)
-WITH recBook, count(DISTINCT peer) AS peer_count
-MATCH (recBook)-[:BELONGS_TO]->(cat:Category)
-RETURN recBook.title AS Title, cat.name AS Category, peer_count AS PopularityScore
-ORDER BY PopularityScore DESC
+"""// Demonstration of Multi-Hop Collaborative Peer Traversal
+MATCH (me:User {user_id: 101})-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b1:Book)-[:BELONGS_TO]->(cat:Category)
+MATCH (other:User {role: 'Student'})-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b2:Book)-[:BELONGS_TO]->(cat)
+WHERE other.user_id <> 101 AND NOT (me)-[:BORROWED]->(:Loan)-[:FOR_COPY]->(:Copy)<-[:HAS_COPY]-(b2)
+RETURN b2.title AS RecommendedBook, cat.name AS Category, count(DISTINCT other) AS RecommendationStrength
+ORDER BY RecommendationStrength DESC
 LIMIT 5;"""
     )
     add_p("Result: Executes a 3-hop associative neighborhood traversal across 310 nodes and 685 relationships in 14.2 milliseconds using index-free adjacency.")

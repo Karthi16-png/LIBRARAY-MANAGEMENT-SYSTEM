@@ -332,9 +332,9 @@ def create_professional_presentation():
     p.font.color.rgb = NAVY_PRIMARY
 
     p2_items = [
-        "Dual-Database Engineering: Combines an enterprise Oracle 21c relational schema with a Neo4j AuraDB property graph.",
+        "Phased Database Migration: Phase 1 utilized Oracle 21c for strict relational modeling, while Phase 2 (DA-3) completely migrated the backend to Neo4j AuraDB to unlock advanced graph traversals and recommendations.",
         "Role-Based Access Control (RBAC): Provides four distinct experiences for Admin, Librarian, Staff (Faculty), and Students.",
-        "Automated Circulation Rules: Real-time 3-book borrowing quota enforcement and daily Rs. 5/day overdue fine calculation.",
+        "Automated Circulation Rules: Real-time 3-book borrowing quota enforcement and daily Rs. 10/day overdue fine calculation.",
         "Interactive Graph Capabilities: Real-time knowledge graph visualizer, shortest-path degrees of separation, and DAG prerequisite learning tracks."
     ]
     for it in p2_items:
@@ -395,10 +395,9 @@ def create_professional_presentation():
         ]),
         ("Tier 3: Data Access & Business Logic Layer", "Parameterized Database Drivers & Controllers", [
             "Neo4j Bolt Protocol (neo4j+s://) executing optimized Cypher shortestPath() and prerequisite queries.",
-            "Oracle Client / cx_Oracle connector executing transaction-managed PL/SQL stored procedures.",
             "Dynamic patron privacy masking to anonymize fellow student loan requests on shared canvases."
         ]),
-        ("Tier 4: Enterprise Storage Tier", "Relational Database (Oracle) & Property Graph (Neo4j)", [
+        ("Tier 4: Enterprise Storage Tier", "Phase 1 (Legacy Oracle) & Phase 2 (Live Neo4j Graph)", [
             "Oracle 21c Database: 10 normalized tables in BCNF, foreign key cascades, triggers, and views.",
             "Neo4j AuraDB: 9 node entity types, 7 relationship edges, and 12 schema uniqueness constraints.",
             "Automated quota enforcement, copy status synchronization, and audit logging."
@@ -477,7 +476,7 @@ def create_professional_presentation():
         ("M:N Books to Authors", "A book may have co-authors, and authors write multiple books. Mapped into the BOOK_AUTHORS relationship table."),
         ("1:N Book to Copies", "Separates abstract bibliographic titles from physical inventory tracking copies (status: Available, Borrowed, Reserved)."),
         ("1:N User to Loans", "Patrons record historical loans over time, strictly capped at 3 active concurrent borrowed books."),
-        ("1:1 Loan to Fines", "Overdue book returns automatically generate a financial disciplinary record (Rs. 5 per overdue day)."),
+        ("1:1 Loan to Fines", "Overdue book returns automatically generate a financial disciplinary record (Rs. 10 per overdue day)."),
         ("Relational Normalization", "Conceptual Member, Employee, and Admin roles are unified into the USERS entity with Role-Based Access Control.")
     ]
     for rel_title, rel_desc in er_points:
@@ -1099,9 +1098,9 @@ BEGIN
         FETCH c_overdue INTO r_ov;
         EXIT WHEN c_overdue%NOTFOUND;
 
-        -- Auto-calculate Rs. 5/day fine
+        -- Auto-calculate Rs. 10/day fine
         UPDATE FINES
-        SET fine_amount = r_ov.days_late * 5.0
+        SET fine_amount = r_ov.days_late * 10.0
         WHERE loan_id = r_ov.loan_id
           AND payment_status = 'Unpaid';
     END LOOP;
@@ -1496,7 +1495,7 @@ END sp_issue_book_loan;"""
     p.font.color.rgb = NAVY_PRIMARY
 
     outcomes = [
-        ("Dual-Database Mastery", "Gained deep architectural expertise in bridging transactional relational schemas (Oracle 21c) with connected graph stores (Neo4j AuraDB)."),
+        ("Database Migration Mastery", "Gained deep architectural expertise by successfully migrating a transactional relational schema (Oracle 21c) into a modern, highly-connected graph store (Neo4j AuraDB)."),
         ("PL/SQL & Constraint Automation", "Successfully replaced error-prone application validation with autonomous database triggers, procedures, and check constraints."),
         ("Enterprise RBAC Implementation", "Engineered strict multi-role permission separation with patron privacy masking and audit trail logging."),
         ("Future Roadmap 1: RFID Hardware Integration", "Deploy physical RFID return drop-boxes for automated instantaneous check-in without librarian intervention."),

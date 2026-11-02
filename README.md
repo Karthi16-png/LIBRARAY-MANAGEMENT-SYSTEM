@@ -12,7 +12,7 @@ The **VITCC Enterprise Library Management System** is a full-featured, secure, a
 ### 👥 Development Team (DA-3 Project Assessment)
 - **Karthik Valliappan C** — `25BAI1051`
 - **Nithin Rangaswamy** — `25BAI1210`
-- **Natraj** — `25BAI1079`
+- **Nataraj** — `25BAI1079`
 
 ---
 
